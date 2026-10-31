@@ -13,9 +13,9 @@ export class AvatarManager {
     // 載入或初始化自訂裝扮
     this.config = this.loadConfig();
 
-    // 在中央出道大舞台 T 型走道前建立專屬主角 Avatar
+    // 在中央出道大舞台 T 型走道前建立專屬主角 Avatar (腳踏實地，無懸空)
     this.playerMesh = this.buildPlayerAvatar();
-    this.playerMesh.position.set(0, HEX_HEIGHT + 1.2, 14);
+    this.playerMesh.position.set(0, HEX_HEIGHT + 0.2, 14);
     this.playerMesh.scale.set(1.8, 1.8, 1.8);
     this.avatarGroup.add(this.playerMesh);
 
@@ -60,10 +60,29 @@ export class AvatarManager {
   buildPlayerAvatar() {
     const root = new THREE.Group();
 
-    // 1. 頭部
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.55, 12, 12), Materials.whiteWall);
+    // 1. 頭部與可愛面部五官 (明確朝向與生動眼神)
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.55, 16, 16), Materials.whiteWall);
     head.position.y = 2.1;
     root.add(head);
+
+    // 靈動大眼睛 (深色反光)
+    const eyeGeo = new THREE.SphereGeometry(0.075, 8, 8);
+    const eyeMat = new THREE.MeshBasicMaterial({ color: 0x0f172a });
+    const eyeL = new THREE.Mesh(eyeGeo, eyeMat);
+    eyeL.position.set(-0.18, 2.15, 0.52);
+    const eyeR = new THREE.Mesh(eyeGeo, eyeMat);
+    eyeR.position.set(0.18, 2.15, 0.52);
+    root.add(eyeL, eyeR);
+
+    // 元氣粉嫩腮紅
+    const blushGeo = new THREE.SphereGeometry(0.09, 8, 8);
+    blushGeo.scale(1.3, 0.6, 0.4);
+    const blushMat = new THREE.MeshBasicMaterial({ color: 0xf43f5e });
+    const blushL = new THREE.Mesh(blushGeo, blushMat);
+    blushL.position.set(-0.28, 1.98, 0.46);
+    const blushR = new THREE.Mesh(blushGeo, blushMat);
+    blushR.position.set(0.28, 1.98, 0.46);
+    root.add(blushL, blushR);
 
     // 髮型
     const hairGroup = new THREE.Group();
@@ -101,49 +120,61 @@ export class AvatarManager {
 
     // 2. 軀幹打歌服
     const bodyMat = this.getOutfitMaterial();
-    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.58, 1.15, 8), bodyMat);
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.56, 1.1, 8), bodyMat);
     body.position.y = 1.35;
     root.add(body);
 
-    // 3. 雙腿 (以髖部頂端為樞軸，支援自然奔跑交替擺動)
-    const legGeo = new THREE.BoxGeometry(0.22, 0.8, 0.22);
+    // 3. 雙腿與前向球鞋 (以髖部頂端為樞軸，球鞋實踏地面)
+    const legGeo = new THREE.BoxGeometry(0.22, 0.65, 0.22);
+    const shoeGeo = new THREE.BoxGeometry(0.26, 0.16, 0.38);
 
     const legGroupL = new THREE.Group();
-    legGroupL.position.set(-0.24, 0.8, 0);
+    legGroupL.position.set(-0.24, 0.72, 0);
     const legL = new THREE.Mesh(legGeo, Materials.whiteWall);
-    legL.position.y = -0.4;
+    legL.position.y = -0.32;
     legL.castShadow = true;
     legGroupL.add(legL);
 
+    const shoeL = new THREE.Mesh(shoeGeo, Materials.chineseAccent);
+    shoeL.position.set(0, -0.64, 0.08); // 鞋頭向前微凸
+    shoeL.castShadow = true;
+    legGroupL.add(shoeL);
+
     const legGroupR = new THREE.Group();
-    legGroupR.position.set(0.24, 0.8, 0);
+    legGroupR.position.set(0.24, 0.72, 0);
     const legR = new THREE.Mesh(legGeo, Materials.whiteWall);
-    legR.position.y = -0.4;
+    legR.position.y = -0.32;
     legR.castShadow = true;
     legGroupR.add(legR);
+
+    const shoeR = new THREE.Mesh(shoeGeo, Materials.chineseAccent);
+    shoeR.position.set(0, -0.64, 0.08);
+    shoeR.castShadow = true;
+    legGroupR.add(shoeR);
 
     root.add(legGroupL, legGroupR);
 
     // 4. 左臂 (自然前後擺動)
-    const armGeo = new THREE.BoxGeometry(0.18, 0.7, 0.18);
+    const armGeo = new THREE.BoxGeometry(0.18, 0.65, 0.18);
     const armGroupL = new THREE.Group();
-    armGroupL.position.set(-0.62, 1.75, 0);
+    armGroupL.position.set(-0.62, 1.65, 0);
     const armL = new THREE.Mesh(armGeo, bodyMat);
-    armL.position.y = -0.35;
+    armL.position.y = -0.32;
     armGroupL.add(armL);
     root.add(armGroupL);
 
-    // 5. 右臂手持專屬應援棒
+    // 5. 右臂 (元氣手持專屬應援手燈朝上揮舞)
     const stickMat = this.getLightstickMaterial();
     const armGroupR = new THREE.Group();
-    armGroupR.position.set(0.62, 1.75, 0);
+    armGroupR.position.set(0.62, 1.65, 0);
     const armR = new THREE.Mesh(armGeo, bodyMat);
-    armR.position.y = -0.35;
+    armR.position.y = -0.25;
+    armR.rotation.x = -Math.PI / 4; // 右臂自然向前舉起
     armGroupR.add(armR);
 
-    const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 1.2, 8), stickMat);
-    stick.position.set(0, -0.65, 0.35);
-    stick.rotation.x = Math.PI / 4;
+    const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 0.9, 8), stickMat);
+    stick.position.set(0, -0.42, 0.25);
+    stick.rotation.x = -Math.PI / 6; // 手燈朝上高舉
     armGroupR.add(stick);
     root.add(armGroupR);
 
@@ -162,7 +193,7 @@ export class AvatarManager {
   refreshAvatar() {
     this.avatarGroup.remove(this.playerMesh);
     this.playerMesh = this.buildPlayerAvatar();
-    this.playerMesh.position.set(0, HEX_HEIGHT + 1.2, 14);
+    this.playerMesh.position.set(0, HEX_HEIGHT + 0.2, 14);
     this.playerMesh.scale.set(1.8, 1.8, 1.8);
     this.avatarGroup.add(this.playerMesh);
     if (window.reviewApp && window.reviewApp.playerController) {
@@ -207,10 +238,8 @@ export class AvatarManager {
     });
   }
 
-  // 主角待機呼吸 (僅在未移動時微幅呼吸，絕不覆蓋世界旋轉角)
+  // 主角待機更新 (高度與轉向由 PlayerController 集中掌管，此處避免多頭覆寫)
   update(time) {
-    if (this.playerMesh && (!window.reviewApp || !window.reviewApp.playerController || !window.reviewApp.playerController.isControlling)) {
-      this.playerMesh.position.y = HEX_HEIGHT + 1.2 + Math.abs(Math.sin(time * 3)) * 0.12;
-    }
+    // 保留介面，不作衝突覆寫
   }
 }
