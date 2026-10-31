@@ -1,0 +1,191 @@
+/* quiz.css: 測驗彈窗、三階引導鷹架提示、50/50 排除與過關結算樣式 */
+
+.quiz-card {
+  max-width: 540px;
+  width: 92%;
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.quiz-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  border-bottom: 2px solid #f1f5f9;
+  padding-bottom: 12px;
+}
+
+.quiz-badge {
+  background: #f1f5f9;
+  color: #475569;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.quiz-combo-badge {
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 800;
+  animation: pulseCombo 1s infinite alternate;
+}
+
+@keyframes pulseCombo {
+  from { transform: scale(1); }
+  to { transform: scale(1.08); }
+}
+
+.quiz-question-box {
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  white-space: pre-line;
+}
+
+/* 選項按鈕列表 */
+.quiz-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.quiz-opt-btn {
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 18px;
+  border-radius: 16px;
+  border: 2px solid #e2e8f0;
+  background: #f8fafc;
+  color: #1e293b;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1.4;
+}
+
+.quiz-opt-btn:hover:not(:disabled) {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  transform: translateY(-2px);
+}
+
+.quiz-opt-btn.correct {
+  border-color: #10b981;
+  background: #ecfdf5;
+  color: #065f46;
+  font-weight: 800;
+}
+
+.quiz-opt-btn.wrong {
+  border-color: #ef4444;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.quiz-opt-btn.eliminated {
+  opacity: 0.35;
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+
+/* 鷹架提示小卡 (Tier 1 & Tier 2) */
+.quiz-hint-card {
+  background: #fffbeb;
+  border-left: 5px solid #f59e0b;
+  border-radius: 12px;
+  padding: 14px 18px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #78350f;
+  margin-bottom: 18px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.portal-btn {
+  margin-top: 10px;
+  width: 100%;
+  min-height: 44px;
+  border: none;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+}
+
+.portal-btn:hover {
+  transform: scale(1.02);
+}
+
+/* 下一題按鈕 */
+.quiz-next-action-btn {
+  width: 100%;
+  min-height: 50px;
+  border: none;
+  border-radius: 25px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.35);
+  transition: transform 0.2s;
+}
+
+.quiz-next-action-btn:hover {
+  transform: scale(1.02);
+}
+
+/* 結算報告卡片 */
+.result-card {
+  text-align: center;
+}
+
+.result-trophy {
+  font-size: 54px;
+  margin-bottom: 12px;
+}
+
+.result-title {
+  font-size: 24px;
+  font-weight: 900;
+  color: #0f172a;
+  margin-bottom: 6px;
+}
+
+.result-score-large {
+  font-size: 44px;
+  font-weight: 900;
+  color: #ec4899;
+  margin: 12px 0;
+}
+
+.result-stats-text {
+  font-size: 16px;
+  color: #475569;
+  margin-bottom: 20px;
+}

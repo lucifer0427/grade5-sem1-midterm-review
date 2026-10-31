@@ -1,0 +1,10 @@
+# Local analysis & architecture reference
+HEART_ISLAND_ARCHITECTURE.md
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# Editor directories
+.vscode/
+.idea/

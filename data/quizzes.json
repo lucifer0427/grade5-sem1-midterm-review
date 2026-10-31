@@ -1,0 +1,1059 @@
+{
+  "version": "1.0.0",
+  "questions": [
+    {
+      "id": "q-math-01",
+      "subject": "math",
+      "buildingId": "math-linegraph",
+      "type": "mcq",
+      "question": "製作折線圖時，若資料數值集中在 150 到 165 公分之間，為什麼要在縱軸 0 到 150 之間使用「鋸齒狀省略符號（≈）」？",
+      "options": [
+        "為了讓圖表看起來更美觀",
+        "截斷無資料的空白區間，放大單位刻度以凸顯數據變化",
+        "因為小數點無法繪製，所以必須省略",
+        "為了節省紙張印刷成本"
+      ],
+      "answer": 1,
+      "level": 1,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：如果從 0 開始每一格畫 10 公分，150 到 165 之間只差 1.5 格，折線看起來會怎樣？",
+        "tier2MicroConcept": "📘 折線圖的核心目的在於『凸顯連續變化趨勢』。省略符號能將無變化的空白壓平，讓微小差距在視覺上清晰易讀。",
+        "portalBuildingId": "math-linegraph"
+      },
+      "explanation": "當數據起算點遠高於零且變動集中在特定區間時，使用省略符號（鋸齒線）可截斷無效空白，縮小縱軸單位刻度，使折線起伏更明顯易讀。"
+    },
+    {
+      "id": "q-math-02",
+      "subject": "math",
+      "buildingId": "math-linegraph",
+      "type": "mcq",
+      "question": "在偶像團體「每週打歌音源播放量」複式折線圖中，A 團與 B 團的折線在第 3 週處『相互交叉重疊』，這代表什麼數學意義？",
+      "options": [
+        "第 3 週兩團的音源播放量完全相等",
+        "第 3 週兩團的播放量都降到零",
+        "A 團的總播放量超越了 B 團",
+        "兩團在第 3 週停止打歌宣傳"
+      ],
+      "answer": 0,
+      "level": 1,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：兩條線交在同一點，代表該點在橫軸（第3週）對應到縱軸（播放量）的數值是？",
+        "tier2MicroConcept": "📘 複式折線圖交叉點：在同一個橫軸座標上，兩條折線的高度相同，代表雙方在該時間點的『數值完全相等』。",
+        "portalBuildingId": "math-linegraph"
+      },
+      "explanation": "複式折線圖的交叉點表示該橫軸時間點上，兩組資料對應的縱軸數值完全相同。"
+    },
+    {
+      "id": "q-math-03",
+      "subject": "math",
+      "buildingId": "math-factors",
+      "type": "mcq",
+      "question": "關於「質數」與「合數」的性質判定，下列哪一個敘述完全正確？",
+      "options": [
+        "所有的偶數都是合數",
+        "1 是全體自然數中最小的質數",
+        "2 是質數中唯一的偶數",
+        "所有的奇數都是質數"
+      ],
+      "answer": 2,
+      "level": 1,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：先想想看數字 1 的因數有幾個？數字 2 的因數有哪幾個？9 是奇數但它是質數嗎？",
+        "tier2MicroConcept": "📘 質數定義：大於 1 的整數，除了 1 和本身外沒有其他因數。1 既不是質數也不是合數；2 只有因數 1 和 2，故 2 是唯一的偶數質數。",
+        "portalBuildingId": "math-factors"
+      },
+      "explanation": "2 的因數只有 1 和 2，是質數中唯一的偶數；1 既非質數亦非合數；9, 15 等奇數有其他因數是合數。"
+    },
+    {
+      "id": "q-math-04",
+      "subject": "math",
+      "buildingId": "math-factors",
+      "type": "mcq",
+      "question": "五位數「573□2」能被 3 整除，請問空格 □ 內可能填入的所有數字和是多少？",
+      "options": [
+        "12",
+        "15",
+        "18",
+        "9"
+      ],
+      "answer": 0,
+      "level": 2,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：3 的倍數特徵是『所有位數數字相加能被 3 整除』。先把已知數字相加：5+7+3+2 = 17，17 加多少會是 3 的倍數？",
+        "tier2MicroConcept": "📘 3的倍數判別：位數和能被 3 整除。5+7+3+2=17。17+1=18 (可)、17+4=21 (可)、17+7=24 (可)。□ 可填 1, 4, 7。求和：1+4+7=12。",
+        "portalBuildingId": "math-factors"
+      },
+      "explanation": "5+7+3+□+2 = 17+□。要被 3 整除，□ 可填 1, 4, 7。三個數字相加 1 + 4 + 7 = 12。"
+    },
+    {
+      "id": "q-math-05",
+      "subject": "math",
+      "buildingId": "math-geometry",
+      "type": "mcq",
+      "question": "小明手上有三根木棒，長度分別為 4 公分、7 公分、x 公分。若這三根木棒能圍成一個三角形，x 不可能是下列哪一個數？",
+      "options": [
+        "4",
+        "7",
+        "10",
+        "11"
+      ],
+      "answer": 3,
+      "level": 2,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：三角形邊長公理『任意兩邊和大於第三邊』，也就是『兩短邊之和必須嚴格大於最長邊』！如果 x 是 11，4+7 有大於 11 嗎？",
+        "tier2MicroConcept": "📘 三角不等式：兩短邊之和 > 最長邊。當 x=11 時，兩短邊 4 + 7 = 11，等於最長邊，會退化成一直線無法圍成三角形。",
+        "portalBuildingId": "math-geometry"
+      },
+      "explanation": "三角形兩短邊和必須大於最長邊。若 x = 11，則 4 + 7 = 11 不大於 11，無法圍成封閉三角形。"
+    },
+    {
+      "id": "q-math-06",
+      "subject": "math",
+      "buildingId": "math-geometry",
+      "type": "mcq",
+      "question": "在一個等腰三角形中，其中一個角是 40°，則另外兩個角『不可能』是下列哪一組組合？",
+      "options": [
+        "40° 和 100°",
+        "70° 和 70°",
+        "40° 和 40°",
+        "上述選項皆有可能"
+      ],
+      "answer": 2,
+      "level": 2,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：等腰三角形『兩底角相等』且『內角和恆為 180°』。如果 40° 是底角，另一底角是 40°，那頂角應該是幾度？三內角能是 40°, 40°, 40° 嗎？",
+        "tier2MicroConcept": "📘 分類討論：若 40° 是頂角，底角=(180-40)/2=70° (角為40, 70, 70)；若 40° 是底角，另一底角也是 40°，頂角=180-40-40=100° (角為40, 40, 100)。不可能出現三個角總和小於 180°。",
+        "portalBuildingId": "math-geometry"
+      },
+      "explanation": "若 40° 為底角，頂角為 180° - 40° - 40° = 100°；若 40° 為頂角，兩底角為 (180° - 40°) ÷ 2 = 70°。內角不可能只有 40° 和 40°（總和才 80° 或無法構成三角形）。"
+    },
+    {
+      "id": "q-math-07",
+      "subject": "math",
+      "buildingId": "math-gcdlcm",
+      "type": "mcq",
+      "question": "偶像經紀公司將 36 支螢光棒和 48 張小卡平分給各練習生，每人拿到的螢光棒一樣多，小卡也一樣多且剛好分完。請問最多可以分給幾位練習生？",
+      "options": [
+        "6 位",
+        "12 位",
+        "24 位",
+        "144 位"
+      ],
+      "answer": 1,
+      "level": 2,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：把物品『平分且剛好分完』，求『最多』能分給多少人，是求最大公因數（GCD）還是最小公倍數（LCM）？",
+        "tier2MicroConcept": "📘 分割分裝模型：求兩數之最大公因數。利用短除法：36 和 48 連續除以 2, 2, 3，左側除數相乘 2 × 2 × 3 = 12。",
+        "portalBuildingId": "math-gcdlcm"
+      },
+      "explanation": "此題為求 36 與 48 的最大公因數。短除法左側公因數連乘 2 × 2 × 3 = 12，故最多可平分給 12 位練習生。"
+    },
+    {
+      "id": "q-math-08",
+      "subject": "math",
+      "buildingId": "math-gcdlcm",
+      "type": "mcq",
+      "question": "A 團每 12 天練習一次排舞，B 團每 18 天練習一次排舞。今天兩團剛好在同一個練習室遇到，請問至少要經過幾天後，兩團才會再次在同一個練習室相遇？",
+      "options": [
+        "6 天",
+        "36 天",
+        "72 天",
+        "216 天"
+      ],
+      "answer": 1,
+      "level": 2,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：不同週期的活動，下一次『同時相遇/重合』，要找 12 與 18 的最小公倍數（LCM）！",
+        "tier2MicroConcept": "📘 週期相遇模型：求兩數最小公倍數。短除法：12 與 18 公除 2 得 6, 9；再除以 3 得 2, 3。LCM = 2 × 3 × 2 × 3 = 36。",
+        "portalBuildingId": "math-gcdlcm"
+      },
+      "explanation": "求 12 與 18 的最小公倍數。短除法 L 型連乘 2 × 3 × 2 × 3 = 36 天。"
+    },
+    {
+      "id": "q-math-09",
+      "subject": "math",
+      "buildingId": "math-solids",
+      "type": "mcq",
+      "question": "關於「六角柱」的形體結構特徵，下列哪一項數據計算錯誤？",
+      "options": [
+        "頂點個數為 12 個",
+        "邊的個數為 18 條",
+        "面的個數為 7 個",
+        "側面形狀全部都是長方形"
+      ],
+      "answer": 2,
+      "level": 2,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：n 角柱有上、下 2 個底面，加上 n 個側面，總面數應該是 n + 幾？六角柱的面數會是 7 嗎？",
+        "tier2MicroConcept": "📘 n 角柱要素公式：頂點 V = 2n = 12；邊 E = 3n = 18；面 F = n + 2 = 6 + 2 = 8 個（2底面+6側面）。面數為 8，不是 7！",
+        "portalBuildingId": "math-solids"
+      },
+      "explanation": "六角柱的面數為 6 個側面 + 2 個底面 = 8 個面，選項中面數 7 個是錯誤的（7 個面是六角錐）。"
+    },
+    {
+      "id": "q-math-10",
+      "subject": "math",
+      "buildingId": "math-solids",
+      "type": "mcq",
+      "question": "將一個圓柱體沿著高剪開展開後，其側面的平面展開圖形狀為何？且該圖形的長邊恰好等於圓柱的什麼？",
+      "options": [
+        "扇形，等於底面直徑",
+        "長方形，等於底面的圓周長",
+        "三角形，等於圓柱的高",
+        "圓形，等於底面積"
+      ],
+      "answer": 1,
+      "level": 1,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：想像一下洋芋片圓形筒的包裝紙撕開鋪平後是什麼形狀？長方形捲回去剛好包住圓形底面一圈！",
+        "tier2MicroConcept": "📘 圓柱展開圖：側面展開為長方形，寬對應圓柱的高，長邊剛好與底面圓形的圓周長完全貼合。",
+        "portalBuildingId": "math-solids"
+      },
+      "explanation": "圓柱側面展開為長方形，該長方形的長恰好等於底面圓周長，寬為圓柱的高。"
+    },
+
+    {
+      "id": "q-eng-01",
+      "subject": "english",
+      "buildingId": "eng-phonics",
+      "type": "mcq",
+      "question": "下列哪一組單字中劃底線的字母組合，其母音發音與其他三者『不同』？",
+      "options": [
+        "lake (a_e)",
+        "rain (ai)",
+        "today (ay)",
+        "tea (ea)"
+      ],
+      "answer": 3,
+      "level": 1,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：前三個字唸起來都有 /eɪ/ 的長母音，第四個單字 tea 聽起來是 /i/ 還是 /eɪ/？",
+        "tier2MicroConcept": "📘 Phonics 規則：a_e, ai, ay 發長母音 /eɪ/（如 lake, rain, today）；而 ea, ee, e_e 發長母音 /i/（如 tea, tree, these）。",
+        "portalBuildingId": "eng-phonics"
+      },
+      "explanation": "lake, rain, today 均發長母音 /eɪ/；tea 發長母音 /i/，發音不同。"
+    },
+    {
+      "id": "q-eng-02",
+      "subject": "english",
+      "buildingId": "eng-phonics",
+      "type": "mcq",
+      "question": "Which word has the same vowel sound as \"bee\" (/i/)?",
+      "options": [
+        "these",
+        "bake",
+        "play",
+        "pain"
+      ],
+      "answer": 0,
+      "level": 1,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：bee 具有長母音 /i/。找找看四個選項中，哪一個具有 /i/ 的音？（注意 e_e 組合）",
+        "tier2MicroConcept": "📘 e_e (these, Pete) 與 ee (bee, tree) 皆發長母音 /i/；bake, play, pain 皆發長母音 /eɪ/。",
+        "portalBuildingId": "eng-phonics"
+      },
+      "explanation": "bee 與 these 中的母音皆為長母音 /i/；其他選項皆為 /eɪ/。"
+    },
+    {
+      "id": "q-eng-03",
+      "subject": "english",
+      "buildingId": "eng-days",
+      "type": "mcq",
+      "question": "Leo 想問今天星期幾，下列問句何者最符合標準語法？",
+      "options": [
+        "What time is today?",
+        "What day is today?",
+        "How is the day today?",
+        "Which date is it?"
+      ],
+      "answer": 1,
+      "level": 1,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：詢問『星期幾』要用專屬特殊疑問詞組 What day...；詢問時間幾點才用 What time。",
+        "tier2MicroConcept": "📘 星期問答公式：問句『What day is today?』或『What day is it?』；答句『It's [星期].』。",
+        "portalBuildingId": "eng-days"
+      },
+      "explanation": "詢問星期幾標準句型為 \"What day is today?\" 或 \"What day is it?\"。"
+    },
+    {
+      "id": "q-eng-04",
+      "subject": "english",
+      "buildingId": "eng-days",
+      "type": "mcq",
+      "question": "A: Is it Tuesday today?\nB: No, ________. It's Wednesday.",
+      "options": [
+        "it is",
+        "it isn't",
+        "today not",
+        "I'm not"
+      ],
+      "answer": 1,
+      "level": 1,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：問句用『Is it...?』開頭進行否定回答，代名詞維持 it，配合 be 動詞否定縮寫為？",
+        "tier2MicroConcept": "📘 一般疑問句簡答：Is it Tuesday? 肯定為『Yes, it is.』；否定為『No, it isn't.』。",
+        "portalBuildingId": "eng-days"
+      },
+      "explanation": "以 Is it 開頭的否定簡答為 \"No, it isn't.\""
+    },
+    {
+      "id": "q-eng-05",
+      "subject": "english",
+      "buildingId": "eng-days",
+      "type": "mcq",
+      "question": "下列關於一週星期的拼寫與規則，何者『不正確』？",
+      "options": [
+        "Sunday 是一週的第一天",
+        "星期專有名詞字首一定要大寫，例如 Friday",
+        "星期三的正確拼寫是 Wednsday",
+        "星期二和星期四分別是 Tuesday 與 Thursday"
+      ],
+      "answer": 2,
+      "level": 1,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：仔細檢查『星期三』的拼字，中間是不是少了一個不發音的字母 d (Wed-nes-day)？",
+        "tier2MicroConcept": "📘 易錯字辨析：星期三正確拼法為 Wednesday（注意 nes 中間有字母 d），字首恆大寫。",
+        "portalBuildingId": "eng-days"
+      },
+      "explanation": "星期三正確拼字為 Wednesday，常被漏寫成 Wednsday。"
+    },
+    {
+      "id": "q-eng-06",
+      "subject": "english",
+      "buildingId": "eng-subjects",
+      "type": "mcq",
+      "question": "A: ________ you have science class on Friday?\nB: Yes, I do.",
+      "options": [
+        "Are",
+        "Do",
+        "Does",
+        "Is"
+      ],
+      "answer": 1,
+      "level": 1,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：句中有一般動詞 have（有課程），主詞為 you，簡答用 I do，疑問句開頭助動詞應使用？",
+        "tier2MicroConcept": "📘 助動詞句型：第二人稱 you 搭配一般動詞 have 時，疑問句使用助動詞 Do（Do you have...? Yes, I do.）。",
+        "portalBuildingId": "eng-subjects"
+      },
+      "explanation": "第二人稱現在簡單式一般動詞疑問句以助動詞 Do 開頭：\"Do you have...?\""
+    },
+    {
+      "id": "q-eng-07",
+      "subject": "english",
+      "buildingId": "eng-subjects",
+      "type": "mcq",
+      "question": "Lisa wants to know about Ken's schedule. Which question is grammatically CORRECT?",
+      "options": [
+        "Does Ken has math class today?",
+        "Do Ken have math class today?",
+        "Does Ken have math class today?",
+        "Is Ken have math class today?"
+      ],
+      "answer": 2,
+      "level": 2,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：主詞 Ken 是第三人稱單數，助動詞用 Does；但注意：助動詞後面的一般動詞必須打回『原形動詞』！",
+        "tier2MicroConcept": "📘 照妖鏡法則：助動詞 Does 出現後，後面的動詞必須恢復原形 have，不可再寫 has！",
+        "portalBuildingId": "eng-subjects"
+      },
+      "explanation": "第三人稱單數疑問句結構為 Does + 主詞 + 原形動詞 have，故 \"Does Ken have math class today?\" 正確。"
+    },
+    {
+      "id": "q-eng-08",
+      "subject": "english",
+      "buildingId": "eng-subjects",
+      "type": "mcq",
+      "question": "「體育課」與「社會課」的英文縮寫或全名，下列配對何者完全正確？",
+      "options": [
+        "體育: PE (Physical Education) / 社會: social studies",
+        "體育: Sports / 社會: society",
+        "體育: Gym class / 社會: history",
+        "體育: PE / 社會: science"
+      ],
+      "answer": 0,
+      "level": 1,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：PE 是 Physical Education 的縮寫，五上教材中社會科的固定單字是？",
+        "tier2MicroConcept": "📘 翰林五上學科：art (美勞), Chinese (國語), English (英語), math (數學), music (音樂), PE (體育), science (自然), social studies (社會)。",
+        "portalBuildingId": "eng-subjects"
+      },
+      "explanation": "體育課為 PE，社會課為 social studies。"
+    },
+    {
+      "id": "q-eng-09",
+      "subject": "english",
+      "buildingId": "eng-review",
+      "type": "mcq",
+      "question": "Look at the schedule: Emma has music class on Monday and English class on Thursday.\nQuestion: Does Emma have English class on Monday?",
+      "options": [
+        "Yes, she does.",
+        "No, she doesn't. She has music class.",
+        "No, he doesn't.",
+        "Yes, she is."
+      ],
+      "answer": 1,
+      "level": 2,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：Emma 週一上的是 music 還是 English？回答女性 Emma 應用代名詞 she 進行否定回答！",
+        "tier2MicroConcept": "📘 課表閱讀與代名詞：Emma 是女性 (she)，週一上音樂課不上英文課，否定回答：No, she doesn't. She has music class.",
+        "portalBuildingId": "eng-review"
+      },
+      "explanation": "Emma 週一上音樂課，因此回答否定 \"No, she doesn't. She has music class.\""
+    },
+    {
+      "id": "q-eng-10",
+      "subject": "english",
+      "buildingId": "eng-review",
+      "type": "mcq",
+      "question": "The idols practice dancing ________ Friday afternoon.",
+      "options": [
+        "in",
+        "at",
+        "on",
+        "to"
+      ],
+      "answer": 2,
+      "level": 1,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：在特定『某一天』或『星期幾』前面，必須使用哪一個時間介系詞？（in, on 還是 at？）",
+        "tier2MicroConcept": "📘 介系詞法則：特定日期、星期名詞或某天的特定時段（如 Friday afternoon）前面一律搭配介系詞 on。",
+        "portalBuildingId": "eng-review"
+      },
+      "explanation": "具體某一天或包含星期的特定時段，時間介系詞固定使用 on。"
+    },
+
+    {
+      "id": "q-sci-01",
+      "subject": "science",
+      "buildingId": "sci-sun-tracker",
+      "type": "mcq",
+      "question": "在台灣進行太陽與竿影觀測時，下列關於「太陽方位」與「竿影方位」的關係，何者完全正確？",
+      "options": [
+        "太陽在東南方時，竿影必指向東南方",
+        "太陽與竿影方位永遠呈現 180° 反向對稱",
+        "中午十二點時，太陽在正北方，竿影指向正南方",
+        "清晨時太陽仰角最高，所以竿影最長"
+      ],
+      "answer": 1,
+      "level": 1,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：光是直線前進的，當光線照在物體上，物體背光處形成的影子會在光源的同一側還是對面？",
+        "tier2MicroConcept": "📘 竿影成像原理：竿影方位與太陽方位呈 180° 反向對稱！上午太陽在東南，竿影在西北；正午太陽在正南，竿影指向正北。",
+        "portalBuildingId": "sci-sun-tracker"
+      },
+      "explanation": "光線沿直線傳播，物體的影子永遠出現在光源的背光反方向，故太陽與竿影方位呈 180° 反向對稱。"
+    },
+    {
+      "id": "q-sci-02",
+      "subject": "science",
+      "buildingId": "sci-sun-tracker",
+      "type": "mcq",
+      "question": "嘉義水上北回歸線紀念碑（23.5°N）在「夏至」正午時，太陽仰角與竿影長度會呈現什麼特殊現象？",
+      "options": [
+        "太陽仰角最低，竿影達到一年中最長",
+        "太陽直射天頂（仰角接近 90°），竿影極短甚至近乎消失",
+        "太陽位於正北天空，竿影指向正南",
+        "因為太陽被遮蔽，所以無法觀測到影子"
+      ],
+      "answer": 1,
+      "level": 2,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：夏至時太陽直射北回歸線（23.5°N），太陽正好在嘉義的正上方天頂，仰角會是幾度？影子會有多長？",
+        "tier2MicroConcept": "📘 夏至太陽直射：在北回歸線上，夏至正午太陽直射天頂（仰角 90°），呈現『立竿無影』的自然現象，此時為全年竿影最短。",
+        "portalBuildingId": "sci-sun-tracker"
+      },
+      "explanation": "夏至正午太陽直射北回歸線，仰角達到 90°，在嘉義水上地區立竿幾乎看不到影子（立竿無影）。"
+    },
+    {
+      "id": "q-sci-03",
+      "subject": "science",
+      "buildingId": "sci-plant-energy",
+      "type": "mcq",
+      "question": "關於植物體內維管束的構造與物質輸送方向，下列敘述何者完全正確？",
+      "options": [
+        "木質部導管負責由上往下運送葉片製造的養分",
+        "韌皮部篩管負責由下往上運送根部吸收的水分",
+        "木質部導管由下往上運送水分，韌皮部篩管輸送光合作用製造的養分",
+        "水分是透過韌皮部進行蒸散作用排出體外"
+      ],
+      "answer": 2,
+      "level": 1,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：根部吸收的是水分還是養分？『水往上吸』是靠木質部還是韌皮部？",
+        "tier2MicroConcept": "📘 維管束機能：木質部（內側導管）＝由下而上輸送根吸收的水分與礦物質；韌皮部（外側篩管）＝輸送葉片光合作用生成的有機養分。",
+        "portalBuildingId": "sci-plant-energy"
+      },
+      "explanation": "植物維管束中，木質部導管負責自下而上運送水分與礦物質；韌皮部篩管則負責運送光合作用製造的養分。"
+    },
+    {
+      "id": "q-sci-04",
+      "subject": "science",
+      "buildingId": "sci-plant-energy",
+      "type": "mcq",
+      "question": "我們日常食用的「馬鈴薯」與「番薯（地瓜）」，在植物學構造分類上分別屬於哪種器官？",
+      "options": [
+        "馬鈴薯是塊根，番薯是塊莖",
+        "馬鈴薯是塊莖，番薯是塊根",
+        "兩者都是特化的果實",
+        "兩者都是地下膨大的主根"
+      ],
+      "answer": 1,
+      "level": 2,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：馬鈴薯上面有『芽眼』（節與節間），會長芽長葉；番薯則是根部膨大儲存澱粉！",
+        "tier2MicroConcept": "📘 變態器官易混淆點：馬鈴薯有節和芽眼，是『塊莖』；番薯無節與芽眼，由根特化膨大，是『塊根』。洋蔥則是『鱗莖』。",
+        "portalBuildingId": "sci-plant-energy"
+      },
+      "explanation": "馬鈴薯具有節與芽眼，屬於地下「塊莖」；番薯則是儲藏澱粉的膨大「塊根」。"
+    },
+    {
+      "id": "q-sci-05",
+      "subject": "science",
+      "buildingId": "sci-plant-energy",
+      "type": "mcq",
+      "question": "高大喬木能克服地心引力，將根部吸收的水分一路抽吸到數十公尺高的樹梢葉片，主要仰賴下列哪一種生理機制的拉力？",
+      "options": [
+        "光合作用釋放氧氣",
+        "葉片氣孔的蒸散作用",
+        "呼吸作用消耗葡萄糖",
+        "花瓣受粉產生的吸引力"
+      ],
+      "answer": 1,
+      "level": 2,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：水分由葉片表面的『氣孔』散失到空氣中，這個像吸管吸水的動力稱作？",
+        "tier2MicroConcept": "📘 蒸散作用拉力：葉片氣孔蒸散水蒸氣，在木質部導管中產生連續的負壓抽吸力（蒸散拉力），是高大植物吸水的主要動力。",
+        "portalBuildingId": "sci-plant-energy"
+      },
+      "explanation": "植物體內 95% 以上的水分透過葉片氣孔以水蒸氣散失，此「蒸散作用」產生強大向上拉力，是長途吸水的主原動力。"
+    },
+    {
+      "id": "q-sci-06",
+      "subject": "science",
+      "buildingId": "sci-plant-reproduce",
+      "type": "mcq",
+      "question": "「蒲公英」長有羽毛狀冠毛、「青楓」果實具有薄翅，這些形態特徵適應了哪一種種子傳播途徑？",
+      "options": [
+        "水力傳播",
+        "風力傳播",
+        "動物附著傳播",
+        "自力彈射傳播"
+      ],
+      "answer": 1,
+      "level": 1,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：輕盈的絨毛與翅膀，最容易被什麼大自然力量帶到遠方？",
+        "tier2MicroConcept": "📘 種子傳播適應：具薄翅或冠毛＝風力傳播（蒲公英、昭和草、青楓）；具刺鉤＝動物傳播（咸豐草）；具氣室海綿組織＝水力傳播（椰子）。",
+        "portalBuildingId": "sci-plant-reproduce"
+      },
+      "explanation": "蒲公英的冠毛與青楓的翅果結構質輕，能藉由風力氣流飄揚擴散至遠處。"
+    },
+    {
+      "id": "q-sci-07",
+      "subject": "science",
+      "buildingId": "sci-plant-reproduce",
+      "type": "mcq",
+      "question": "小英將「落地生根」的一片葉子摘下平放在濕潤泥土上，不久後發現在葉片哪裡長出了不定芽與新根？",
+      "options": [
+        "葉片的葉柄切口處",
+        "葉片正中央的主葉脈上",
+        "葉緣凹陷的缺刻處",
+        "葉片背面的氣孔上"
+      ],
+      "answer": 2,
+      "level": 1,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：回想課本實驗圖片，落地生根的小小新植株是從葉子邊緣的鋸齒波浪缺刻冒出來的嗎？",
+        "tier2MicroConcept": "📘 葉繁殖特徵：落地生根的葉緣凹陷缺刻處具有分生組織，在適當濕度下會直接萌發出不定芽與根，長成新獨立植株。",
+        "portalBuildingId": "sci-plant-reproduce"
+      },
+      "explanation": "落地生根屬於營養器官無性繁殖，其葉緣缺刻處能自發分化出不定芽與幼根。"
+    },
+    {
+      "id": "q-sci-08",
+      "subject": "science",
+      "buildingId": "sci-plant-reproduce",
+      "type": "mcq",
+      "question": "一朵「完全花」必須同時具備哪四個構造？",
+      "options": [
+        "花萼、花瓣、雄蕊、雌蕊",
+        "根、莖、葉、花",
+        "花梗、蜜腺、果實、種子",
+        "花瓣、花藥、胚珠、花粉管"
+      ],
+      "answer": 0,
+      "level": 1,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：由外向內包含綠色底座、美麗花片、公的構造與母的構造！",
+        "tier2MicroConcept": "📘 完全花四部構造：最外層花萼（保護花芽）、第二層花瓣（吸引媒介）、第三層雄蕊（產生花粉）、最內層雌蕊（孕育胚珠）。",
+        "portalBuildingId": "sci-plant-reproduce"
+      },
+      "explanation": "完全花的標準定義為同時具備花萼、花瓣、雄蕊與雌蕊四部構造。"
+    },
+    {
+      "id": "q-sci-09",
+      "subject": "science",
+      "buildingId": "sci-dichotomy",
+      "type": "mcq",
+      "question": "在科學探究中運用「二分法」將生物分類時，必須遵守下列哪一項重要原則？",
+      "options": [
+        "分類標準可以依照個人喜好或好不好看來決定",
+        "每次分類只能設定一個明確、客觀且具對立性的標準",
+        "一次可以同時依照顏色、高度和生長環境三個條件進行劃分",
+        "分類完成後每個類別裡面的生物數量必須完全一樣多"
+      ],
+      "answer": 1,
+      "level": 1,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：二分法就像樹枝分叉成兩路，如果標準模稜兩可（例如：漂不漂亮），大家分出來會一樣嗎？",
+        "tier2MicroConcept": "📘 二分法核心原則：每次分類僅依據『單一明確、客觀可檢驗』的特徵（是/否），將群體二分為互斥的兩組。",
+        "portalBuildingId": "sci-dichotomy"
+      },
+      "explanation": "二分法要求每次分類必須依據單一明確且客觀的對立標準（例如：會不會開花、直根或鬚根）。"
+    },
+    {
+      "id": "q-sci-10",
+      "subject": "science",
+      "buildingId": "sci-dichotomy",
+      "type": "mcq",
+      "question": "想要將「水稻、菠菜、玉米、蔥」四種植物進行二分法分類，下列哪一個分類標準可以將牠們分成兩組？",
+      "options": [
+        "會不會結種子",
+        "是直根系或鬚根系",
+        "是水生植物或陸生植物",
+        "有沒有葉綠體"
+      ],
+      "answer": 1,
+      "level": 2,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：菠菜的主根粗壯有側根（直根系）；而水稻、玉米、蔥的根部像鬍鬚一樣（鬚根系）！",
+        "tier2MicroConcept": "📘 根系二分法：直根系（菠菜、咸豐草）vs 鬚根系（水稻、玉米、蔥、蒜）。四者皆會開花結種子且皆為陸生綠色植物。",
+        "portalBuildingId": "sci-dichotomy"
+      },
+      "explanation": "菠菜為直根系，水稻、玉米與蔥為鬚根系，因此「是直根系或鬚根系」可將四者有效劃分。"
+    },
+
+    {
+      "id": "q-soc-01",
+      "subject": "social",
+      "buildingId": "soc-taiwan-geo",
+      "type": "mcq",
+      "question": "關於地球表面「經線」與「緯線」的空間特性，下列哪一項敘述完全正確？",
+      "options": [
+        "所有的緯線長度都相等，並在南北兩極交會",
+        "經線是連接南北極的半圓弧線，每隔 15° 形成 1 小時的時差",
+        "赤道是經度 0° 的基準線，又稱為本初子午線",
+        "經線的主要功能是劃分地球的寒帶、溫帶與熱帶氣候"
+      ],
+      "answer": 1,
+      "level": 1,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：地球自轉一圈 360 度耗費 24 小時，360 ÷ 24 = 15 度，這與經線還是緯線有關？",
+        "tier2MicroConcept": "📘 經緯線對照：經線（子午線）連接南北兩極、長度相等，用以劃分時區（每15°差1小時）；緯線平行赤道、長度隨緯度遞減，劃分氣候帶。",
+        "portalBuildingId": "soc-taiwan-geo"
+      },
+      "explanation": "經線連接南北兩極且等長，隨地球自轉每 15° 產生 1 小時時差；本初子午線為經度 0°；赤道為緯度 0°。"
+    },
+    {
+      "id": "q-soc-02",
+      "subject": "social",
+      "buildingId": "soc-taiwan-geo",
+      "type": "mcq",
+      "question": "臺灣本島的經緯度坐標大約介於下列哪一個範圍之間？且哪一條重要緯線橫切通過中南部？",
+      "options": [
+        "22°S～25°S，120°W～122°W；赤道",
+        "22°N～25°N，120°E～122°E；北回歸線 (23.5°N)",
+        "10°N～15°N，100°E～105°E；本初子午線",
+        "22°N～25°N，120°E～122°E；南回歸線 (23.5°S)"
+      ],
+      "answer": 1,
+      "level": 1,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：臺灣位於北半球（N）與東半球（E），北回歸線通過嘉義水上與花蓮瑞穗！",
+        "tier2MicroConcept": "📘 臺灣絕對位置：東經 120°E～122°E、北緯 22°N～25°N。北回歸線（23.5°N）穿過臺灣，將臺灣分為熱帶與副熱帶氣候區。",
+        "portalBuildingId": "soc-taiwan-geo"
+      },
+      "explanation": "臺灣本島位於東半球北半球（22°N～25°N, 120°E～122°E），北回歸線（23.5°N）橫穿嘉義與花蓮。"
+    },
+    {
+      "id": "q-soc-03",
+      "subject": "social",
+      "buildingId": "soc-terrains",
+      "type": "mcq",
+      "question": "地勢通常在海拔 100 公尺以上，頂部開闊平坦如桌面，但周緣以陡坡與周圍低地相接，早期居民常開鑿「埤塘」蓄水灌溉的是哪種地形？",
+      "options": [
+        "山地",
+        "盆地",
+        "台地",
+        "平原"
+      ],
+      "answer": 2,
+      "level": 1,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：頂部平坦像一張大平台，例如林口、桃園，因為缺乏大河所以先民開挖埤塘！",
+        "tier2MicroConcept": "📘 台地特徵：海拔 100 公尺以上，頂部平坦如桌面，邊緣有陡坡。代表：林口台地、桃園台地（埤塘之鄉）、八卦台地。",
+        "portalBuildingId": "soc-terrains"
+      },
+      "explanation": "台地頂部平坦開闊、周緣坡陡。早期因地勢高無大河流過且水分易滲透，桃園台地開鑿大量埤塘蓄水農業灌溉。"
+    },
+    {
+      "id": "q-soc-04",
+      "subject": "social",
+      "buildingId": "soc-terrains",
+      "type": "mcq",
+      "question": "在等高線地形圖中，若發現某一區域的等高線分佈「非常密集且重疊」，這代表該地的地勢具有什麼特徵？",
+      "options": [
+        "坡度極為平緩開闊，適合大規模耕種",
+        "地勢陡峭險峻，甚至可能形成懸崖峭壁",
+        "地表下陷形成巨大的封閉凹地",
+        "該區域海拔高度低於海平面"
+      ],
+      "answer": 1,
+      "level": 2,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：相同的水平距離內，等高線越密集，代表高度在短距離內急遽上升或下降！",
+        "tier2MicroConcept": "📘 等高線疏密法則：等高線越密集＝坡度越陡峭；等高線越稀疏＝坡度越平緩；等高線若重疊＝斷崖或懸崖。",
+        "portalBuildingId": "soc-terrains"
+      },
+      "explanation": "等高線密集代表單位水平距離內的高度落差極大，即地勢陡峭險峻。"
+    },
+    {
+      "id": "q-soc-05",
+      "subject": "social",
+      "buildingId": "soc-monsoon",
+      "type": "mcq",
+      "question": "每年冬季臺灣吹拂「東北季風」，為什麼基隆與宜蘭陰雨連綿成為「雨港」，而中南部地區卻乾燥晴朗進入枯水期？",
+      "options": [
+        "因為東北季風吹過中央山脈後水氣蒸發",
+        "東北季風遇中央山脈迎風面爬升降雨，越過山脈後在背風面的中南部下沉乾燥",
+        "因為中南部地勢太高，雲層無法進入",
+        "因為中南部冬天受到西南季風強烈吹拂"
+      ],
+      "answer": 1,
+      "level": 2,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：東北季風從東北方吹來，東北部是『迎風面』還是『背風面』？高聳的中央山脈扮演什麼角色？",
+        "tier2MicroConcept": "📘 地形雨效應：冬季東北季風越過東海帶來水氣，遇中央山脈迎風面（基隆宜蘭）抬升致雨；越過山頂下沉至中南部（背風面），水氣稀少晴朗乾燥。",
+        "portalBuildingId": "soc-monsoon"
+      },
+      "explanation": "臺灣東北部為東北季風迎風面，水氣受山脈阻擋爬升凝結成地形雨；中南部處於背風面，氣流下沉乾燥形成枯水期。"
+    },
+    {
+      "id": "q-soc-06",
+      "subject": "social",
+      "buildingId": "soc-monsoon",
+      "type": "mcq",
+      "question": "新竹的「米粉與柿餅」、恆春的「洋蔥」，以及澎湖農田特有的「菜宅（咕咾石防風牆）」，是為了適應或利用臺灣哪一種氣候現象？",
+      "options": [
+        "夏季強烈的西南季風與午後雷陣雨",
+        "冬季強勁乾燥的局部強風（東北季風衍生之九降風、落山風與鹹雨）",
+        "春季梅雨季節的連續潮濕陰雨",
+        "秋季乾旱引發的森林火災"
+      ],
+      "answer": 1,
+      "level": 2,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：新竹九降風、恆春落山風都是冬天東北季風受到特殊地形擠壓加劇所形成的乾燥強風！",
+        "tier2MicroConcept": "📘 局部風候與生活適應：新竹九降風利於風乾米粉柿餅；恆春落山風吹乾土壤孕育甘甜洋蔥；澎湖菜宅阻擋帶鹽分之鹹雨強風。",
+        "portalBuildingId": "soc-monsoon"
+      },
+      "explanation": "新竹九降風、恆春落山風與澎湖菜宅皆是順應冬季東北季風在特殊地形下所形成的強風風候適應策略。"
+    },
+    {
+      "id": "q-soc-07",
+      "subject": "social",
+      "buildingId": "soc-water",
+      "type": "mcq",
+      "question": "臺灣年平均降雨量高達 2,500 毫米（約為世界平均值的三倍），卻仍經常面臨缺水危機，其主要自然原因『不包括』下列何者？",
+      "options": [
+        "山高坡陡，河川短急，雨水迅速奔流入海難以蓄留",
+        "降雨時空分配不均，夏季多豪雨颱風，冬季中南部乾旱",
+        "臺灣人口稠密且工業發達，用水需求量大",
+        "臺灣四面環海，海水滲透導致全島淡水完全鹽化"
+      ],
+      "answer": 3,
+      "level": 2,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：注意題目問的是『不包括』！臺灣四周雖然是海洋，但會讓全島淡水完全鹽化嗎？",
+        "tier2MicroConcept": "📘 臺灣水資源困境成因：1. 地形山高坡陡、河川短急；2. 荒溪型河川降雨時空不均；3. 人口密度高人均雨量少。海水並未造成全島淡水完全鹽化。",
+        "portalBuildingId": "soc-water"
+      },
+      "explanation": "臺灣並無全島淡水完全鹽化之情事。缺水主因為地形坡陡流急、降水時空不均與人均分配量少。"
+    },
+    {
+      "id": "q-soc-08",
+      "subject": "social",
+      "buildingId": "soc-water",
+      "type": "mcq",
+      "question": "臺灣本島長度最長、跨越縣市最多的大河川是哪一條？",
+      "options": [
+        "高屏溪",
+        "淡水河",
+        "濁水溪",
+        "曾文溪"
+      ],
+      "answer": 2,
+      "level": 1,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：濁水溪長達 186 公里，流經彰化與雲林交界，是臺灣第一長河！",
+        "tier2MicroConcept": "📘 臺灣河川之最：最長河川為『濁水溪』（約 186 公里）；流域面積最廣為『高屏溪』。",
+        "portalBuildingId": "soc-water"
+      },
+      "explanation": "濁水溪全長約 186 公里，為臺灣本島長度最長的河川。"
+    },
+    {
+      "id": "q-soc-09",
+      "subject": "social",
+      "buildingId": "soc-taiwan-geo",
+      "type": "mcq",
+      "question": "若韓國首爾（時區 UTC+9）於晚上 8:00 舉行 K-POP 偶像打歌直播，身處臺灣臺北（時區 UTC+8）的小華應該在臺灣時間幾點守在電視機前收看？",
+      "options": [
+        "晚上 7:00",
+        "晚上 8:00",
+        "晚上 9:00",
+        "下午 6:00"
+      ],
+      "answer": 0,
+      "level": 2,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：首爾是 UTC+9，臺灣是 UTC+8，首爾時間比臺灣『快 1 小時』。當首爾 8:00 時，臺灣時間是？",
+        "tier2MicroConcept": "📘 時區計算原則：東方地點時間較快。首爾 (UTC+9) 比臺北 (UTC+8) 快 1 小時。臺灣時間 = 首爾時間 20:00 - 1 小時 = 19:00（晚上 7:00）。",
+        "portalBuildingId": "soc-taiwan-geo"
+      },
+      "explanation": "首爾時區 UTC+9 比臺灣 UTC+8 早 1 小時，當首爾晚上 8:00（20:00）時，臺灣時間為晚上 7:00（19:00）。"
+    },
+    {
+      "id": "q-soc-10",
+      "subject": "social",
+      "buildingId": "soc-terrains",
+      "type": "mcq",
+      "question": "臺灣最大的沖積平原是哪一個平原？歷來為臺灣最重要的農業稻米穀倉與蔬果集散地。",
+      "options": [
+        "蘭陽平原",
+        "屏東平原",
+        "花東縱谷平原",
+        "嘉南平原"
+      ],
+      "answer": 3,
+      "level": 1,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：橫跨嘉義與臺南，地勢廣大平坦，有著名的烏山頭水庫與嘉南大圳灌溉！",
+        "tier2MicroConcept": "📘 臺灣五大平原：嘉南平原為全臺面積最大之沖積平原，土壤肥沃，素有臺灣穀倉之美譽。",
+        "portalBuildingId": "soc-terrains"
+      },
+      "explanation": "嘉南平原為臺灣面積最廣大的沖積平原，自古以來即為農業精華區。"
+    },
+
+    {
+      "id": "q-chi-01",
+      "subject": "chinese",
+      "buildingId": "chi-dream",
+      "type": "mcq",
+      "question": "在康軒五上第一課〈蚊帳大使〉中，五歲女孩凱瑟琳如何透過行動逐步引發全球廣大迴響？下列脈絡何者最符合課文主旨？",
+      "options": [
+        "依賴父母的鉅額存款在非洲開辦醫院",
+        "由個人省錢捐蚊帳做起，進而手繪感謝狀義賣、演說募款並致信比爾·蓋茲",
+        "發起國際連署抗議各國政府效率低落",
+        "親自搭飛機前往非洲分發醫療物資"
+      ],
+      "answer": 1,
+      "level": 1,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：回想課文情節：凱瑟琳年紀雖小，但從省下吃點心零用錢買一頂蚊帳開始，一步一步擴大影響力！",
+        "tier2MicroConcept": "📘 〈蚊帳大使〉核心：小女孩以純真善念化為具體行動，實踐『年齡雖小但願力無限』的利他情懷與影響力擴散。",
+        "portalBuildingId": "chi-dream"
+      },
+      "explanation": "凱瑟琳從省下零用錢購買第一頂蚊帳開始，隨後製作手繪感謝狀募款並寫信給比爾·蓋茲，帶動全美及全球的捐贈風潮。"
+    },
+    {
+      "id": "q-chi-02",
+      "subject": "chinese",
+      "buildingId": "chi-dream",
+      "type": "mcq",
+      "question": "齊柏林在第二課〈從空中看臺灣〉中，主要運用了哪種核心寫作手法來喚醒國人守護家園的自省意識？",
+      "options": [
+        "大量引用古代寓言故事來比喻現代生活",
+        "透過空中俯瞰「美麗自然」與「受傷哀愁」的鮮明對比與映襯",
+        "以第一人稱自傳方式逐一介紹攝影器材的性能",
+        "採用幽默詼諧的諷刺筆調批評都市人口膨脹"
+      ],
+      "answer": 1,
+      "level": 2,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：課文前面描寫綠色巨龍般的山脈、美麗的水鹿（美），後面鏡頭轉到開腸破肚的採礦場與消波塊（哀愁）！",
+        "tier2MicroConcept": "📘 寫作技巧：映襯/對比手法。齊柏林以『看見臺灣的美麗』與『目睹土地的哀愁』形成強烈反差，震撼人心以激發環保行動。",
+        "portalBuildingId": "chi-dream"
+      },
+      "explanation": "齊柏林以宏觀鳥瞰視野，藉由臺灣壯麗山海與過度開發破壞的「美麗與哀愁強烈對比」，呼籲大眾共同愛護土地。"
+    },
+    {
+      "id": "q-chi-03",
+      "subject": "chinese",
+      "buildingId": "chi-dream",
+      "type": "mcq",
+      "question": "第三課陳煌的現代詩〈攀岩高手〉中，詩人運用擬人與懸疑技巧，實際上是在描寫哪一種堅毅生長的植物？",
+      "options": [
+        "含羞草",
+        "蒲公英",
+        "爬牆虎",
+        "仙人掌"
+      ],
+      "answer": 2,
+      "level": 1,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：它沒有鋼索防護，卻用細小虯鬚攀住岩石峭壁，一片綠葉就是一隻手！",
+        "tier2MicroConcept": "📘 〈攀岩高手〉詠物焦點：全詩將『爬牆虎』擬人化為無所畏懼的極限攀登者，象徵面對逆境堅持不懈的奮鬥精神。",
+        "portalBuildingId": "chi-dream"
+      },
+      "explanation": "陳煌在〈攀岩高手〉中藉由攀登者意象描寫爬牆虎伸出細足深抓岩壁的堅韌生命力。"
+    },
+    {
+      "id": "q-chi-04",
+      "subject": "chinese",
+      "buildingId": "chi-art",
+      "type": "mcq",
+      "question": "第四課蔣勳的〈恆久的美〉中，作者從嘉南平原的秋收稻浪聯想到法國畫家米勒的名作《拾穗》。該畫作最核心的文化意涵為何？",
+      "options": [
+        "控訴貴族殘暴奪取農民的私有土地",
+        "展現大自然的磅礡氣勢與農業機械的進步",
+        "體現留穗分享的寬厚仁慈，以及貧苦農婦任勞任怨的生存尊嚴",
+        "教導孩童如何精確測量麥穗的重量與營養價值"
+      ],
+      "answer": 2,
+      "level": 2,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：地主收割時特意留下零散麥穗給貧苦窮人拾取，三位農婦默默在田裡彎腰拾穗象徵什麼？",
+        "tier2MicroConcept": "📘 蔣勳美學觀：美不只在線條色彩，更在人性價值。米勒《拾穗》展現古老土地上的『寬厚分享』與勞動者的『生存尊嚴』。",
+        "portalBuildingId": "chi-art"
+      },
+      "explanation": "《拾穗》不僅描繪勞動之美，更蘊含了古老聖經路得故事中「寬容分享」與勞動者堅毅尊嚴的恆久精神美感。"
+    },
+    {
+      "id": "q-chi-05",
+      "subject": "chinese",
+      "buildingId": "chi-art",
+      "type": "mcq",
+      "question": "第五課〈它抓得住你──商標的故事〉屬於事物說明文，依課文所述，古代商標的起源主要與下列何者最相關？",
+      "options": [
+        "為了在拍賣會上炫耀財富",
+        "古代工匠在器物上烙刻姓名印記，以建立信譽並以示負責",
+        "皇帝用來收取高額商業稅收的防偽標籤",
+        "各國軍隊辨識敵我戰旗的軍事密碼"
+      ],
+      "answer": 1,
+      "level": 1,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：古代陶匠或鐵匠在做好的盤子、刀劍刻上自己的名字，是為了保證品質與信譽嗎？",
+        "tier2MicroConcept": "📘 商標起源：商標發軔於古代工匠在陶器、青銅器烙印名號標記，其核心本質在於『品質保證』與『信譽擔保』。",
+        "portalBuildingId": "chi-art"
+      },
+      "explanation": "商標源於古代手工匠人於成品烙刻個人標記，作為品質擔保與誠信負責的象徵。"
+    },
+    {
+      "id": "q-chi-06",
+      "subject": "chinese",
+      "buildingId": "chi-art",
+      "type": "mcq",
+      "question": "第六課〈故事「動」起來〉提到電影動畫的誕生，主要奠基於人類眼睛的哪一項科學視覺生理特性？",
+      "options": [
+        "近視與遠視的屈光不正",
+        "視覺暫留現象（光像刺激消失後影像在視網膜停留短暫時間）",
+        "眼睛辨別三原色的感光細胞特性",
+        "眼球快速轉動產生的錯覺"
+      ],
+      "answer": 1,
+      "level": 1,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：當快速翻動一本連續動作的小人畫冊時，畫面看起來會動，這是因為大腦視網膜具有？",
+        "tier2MicroConcept": "📘 動畫科學原理：視覺暫留。當一幅畫面消失後，視神經仍保留約 0.1 秒的短暫影像，連續快速播放時即產生流暢運動錯覺。",
+        "portalBuildingId": "chi-art"
+      },
+      "explanation": "電影與動畫利用人類眼睛的「視覺暫留」原理，以每秒快速播放連續微幅差異畫面，使大腦產生平滑運動的錯覺。"
+    },
+    {
+      "id": "q-chi-07",
+      "subject": "chinese",
+      "buildingId": "chi-strategy",
+      "type": "mcq",
+      "question": "在統整活動「閱讀監控策略」中，若讀完一篇說明文後想要了解「作者為什麼要安排這個圖表或寫作順序」，應使用哪一個層次的提問？",
+      "options": [
+        "找一找（檢索提取客觀事實）",
+        "推一推（推論前後因果關係）",
+        "評一評（批判評估寫作手法與文本架構價值）",
+        "背一背（機械記憶名詞定義）"
+      ],
+      "answer": 2,
+      "level": 2,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：探討作者『為什麼這樣寫、寫得好不好、手法成效如何』，屬於高層次的評估與批判！",
+        "tier2MicroConcept": "📘 閱讀三層次：1. 找一找（事實檢索）；2. 推一推（推論因果）；3. 評一評（評價手法、省思作者意圖與觀點價值）。",
+        "portalBuildingId": "chi-strategy"
+      },
+      "explanation": "「評一評」引導讀者站在宏觀審視作者的寫作安排、結構邏輯與修辭手法效果，屬於高階評估策略。"
+    },
+    {
+      "id": "q-chi-08",
+      "subject": "chinese",
+      "buildingId": "chi-rhetoric",
+      "type": "mcq",
+      "question": "下列文句中括號內的字音，哪一個完全正確？",
+      "options": [
+        "全場歌迷「屏」（ㄆㄧㄥˊ）氣凝神等待偶像出場",
+        "連續幾週高強度的練舞，讓練習生感到身心俱「疲」（ㄆㄧˊ）",
+        "這首歌曲在排行榜上累積「載」（ㄗㄞˇ）譽無數",
+        "小明為善不欲人知，默默「累」（ㄌㄟˋ）計愛心存款"
+      ],
+      "answer": 1,
+      "level": 1,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：『屏氣』是抑制呼吸，讀三聲 ㄅㄧㄥˇ；『累計』是堆疊，讀三聲 ㄌㄟˇ！",
+        "tier2MicroConcept": "📘 多音字易錯音：屏氣凝神（ㄅㄧㄥˇ）；屏風/屏障（ㄆㄧㄥˊ）；累（ㄌㄟˇ）計；勞累（ㄌㄟˋ）；一年半載（ㄗㄞˇ）；載（ㄗㄞˋ）譽。",
+        "portalBuildingId": "chi-rhetoric"
+      },
+      "explanation": "身心俱疲（ㄆㄧˊ）讀音正確；屏氣應讀 ㄅㄧㄥˇ；載譽應讀 ㄗㄞˋ（選項誤標為 ㄗㄞˇ）；累計應讀 ㄌㄟˇ。"
+    },
+    {
+      "id": "q-chi-09",
+      "subject": "chinese",
+      "buildingId": "chi-rhetoric",
+      "type": "mcq",
+      "question": "「這支熱門偶像團體在巨蛋開唱，湧入數萬粉絲，現場真是座無虛席、熱鬧非凡！」這句話最適合使用下列哪一個成語來形容盛況？",
+      "options": [
+        "門可羅雀",
+        "萬人空巷",
+        "微不足道",
+        "任勞任怨"
+      ],
+      "answer": 1,
+      "level": 1,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：形容所有人都走出巷子湧向街頭或會場觀賞盛況，熱鬧非凡的成語是？",
+        "tier2MicroConcept": "📘 成語情境辨析：『萬人空巷』＝家家戶戶的人都走到巷外慶祝，形容轟動熱鬧盛況；門可羅雀＝門庭冷落無人來訪。",
+        "portalBuildingId": "chi-rhetoric"
+      },
+      "explanation": "「萬人空巷」形容盛大熱鬧慶祝時，街巷民眾全部出動聚集在同一場所的轟動盛況。"
+    },
+    {
+      "id": "q-chi-10",
+      "subject": "chinese",
+      "buildingId": "chi-rhetoric",
+      "type": "mcq",
+      "question": "「中央山脈宛如綠色巨龍橫臥，蔚藍的太平洋宛若水鹿環抱著這座島嶼。」這句話同時使用了哪兩種修辭手法？",
+      "options": [
+        "譬喻與排比",
+        "映襯與誇飾",
+        "擬人與頂真",
+        "設問與對偶"
+      ],
+      "answer": 0,
+      "level": 2,
+      "guidedHints": {
+        "tier1Keyword": "💡 題眼提示：句中出現『宛如』、『宛若』是譬喻；結構相似、節奏工整成排相連是排比！",
+        "tier2MicroConcept": "📘 修辭結構：使用喻詞（宛如、宛若）將山脈比作巨龍、海洋比作水鹿，為『譬喻』；兩句結構對稱連綴，為『排比』。",
+        "portalBuildingId": "chi-rhetoric"
+      },
+      "explanation": "句中運用「宛如」、「宛若」將山海比擬為巨龍與水鹿，屬譬喻修辭；且句子結構相似形成排比節奏。"
+    }
+  ]
+}

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>國小五年級期中考 3D 複習島 (Exam Review Island)</title>
+  <link rel="stylesheet" href="css/ui.css">
+  <link rel="stylesheet" href="css/quiz.css">
+  
+  <script>
+    window.addEventListener('error', (e) => {
+      console.error('Global Error:', e.message, e.filename, e.lineno);
+      const errBox = document.createElement('div');
+      errBox.id = 'debug-error-box';
+      errBox.style = 'position:fixed;bottom:10px;left:10px;background:rgba(220,38,38,0.9);color:white;padding:10px 14px;z-index:99999;font-size:13px;border-radius:8px;max-width:90%;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+      errBox.textContent = `⚠️ 載入錯誤: ${e.message} (${e.filename}:${e.lineno})`;
+      document.body.appendChild(errBox);
+    });
+    window.addEventListener('unhandledrejection', (e) => {
+      console.error('Unhandled Promise Rejection:', e.reason);
+      const errBox = document.createElement('div');
+      errBox.id = 'debug-error-box';
+      errBox.style = 'position:fixed;bottom:10px;left:10px;background:rgba(220,38,38,0.9);color:white;padding:10px 14px;z-index:99999;font-size:13px;border-radius:8px;max-width:90%;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+      errBox.textContent = `⚠️ 非同步錯誤: ${e.reason}`;
+      document.body.appendChild(errBox);
+    });
+  </script>
+  
+  <!-- Import Map: 原生 ESM 載入 Three.js，零打包工具依賴 -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+
+  <!-- 3D WebGL Canvas 容器 -->
+  <div id="canvas-container"></div>
+
+  <!-- 載入中畫面 -->
+  <div id="loading-overlay">
+    <div class="spinner"></div>
+    <div style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">3D 知識島生成中...</div>
+    <div style="font-size: 13px; color: #94a3b8;">正在鋪設六角群島與期中考題庫</div>
+  </div>
+
+  <!-- 頂部 HUD 狀態欄 -->
+  <div id="top-hud">
+    <div class="hud-pill">
+      <span class="hud-title">🌟 小五期中複習島</span>
+      <span style="font-size: 12px; color: #64748b; background: #f1f5f9; padding: 2px 8px; border-radius: 10px;">K-POP 練習生出道版</span>
+    </div>
+
+    <div class="hud-pill">
+      <div class="hud-stat">
+        <span>⭐</span>
+        <span id="hud-stars">0</span>
+      </div>
+      <div style="width: 1px; height: 16px; background: #cbd5e1;"></div>
+      <div class="hud-stat">
+        <span>🪙</span>
+        <span id="hud-coins">100</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 右側控制面板 -->
+  <div id="side-controls">
+    <button id="btn-toggle-ctrl" class="control-circle-btn" title="自由操控練習生跑島 (WASD/點擊)">
+      🎮
+    </button>
+    <button id="btn-top-view" class="control-circle-btn" title="切換鳥瞰俯視視角">
+      🗺️
+    </button>
+    <button id="btn-grand-exam" class="control-circle-btn" title="前往期中總大會考" style="background: linear-gradient(135deg, #ec4899, #f43f5e); color: #fff;">
+      🎤
+    </button>
+    <button id="btn-open-wardrobe" class="control-circle-btn" title="練習生造型更衣室">
+      👗
+    </button>
+    <button id="btn-dance" class="control-circle-btn" title="K-POP 打歌熱舞 (快捷鍵 B)">
+      💃
+    </button>
+    <div class="time-slider-box">
+      <span>☀️ 日夜</span>
+      <input type="range" id="time-slider" min="0" max="24" step="0.5" value="12">
+    </div>
+  </div>
+
+  <!-- 靠近建築近身互動提示條 -->
+  <div id="nearby-prompt-banner">
+    <span>🏛️ 靠近 <strong id="nearby-b-name" style="color: #f59e0b;">建築</strong></span>
+    <span class="key-badge">按 E</span>
+    <button class="prompt-btn" id="nearby-enter-btn">立即進入 ➔</button>
+  </div>
+
+  <!-- 操作教學提示 Toast -->
+  <div id="ctrl-help-toast">
+    🎮 <strong>自由跑島模式</strong><br>
+    • <b>WASD / 方向鍵 / 點擊地面</b>：奔跑漫遊<br>
+    • <b>空白鍵 Space</b>：立體跳躍<br>
+    • <b>Shift 鍵</b>：疾風加速奔馳<br>
+    • <b>B 鍵 / 點擊 💃</b>：K-POP 打歌熱舞<br>
+    • <b>靠近建築按 E</b>：快速進入單元挑戰<br>
+    • <b>拾取星石與盲盒 🎁</b>：賺取金幣與隨機 Buff！
+  </div>
+
+  <!-- 底部學科篩選快速列 -->
+  <div id="quick-quiz-banner" class="hud-pill quick-quiz-toast" style="display: none;">
+    <span id="quick-quiz-title">📐 數學智慧島</span>
+    <button id="quick-quiz-start-btn" class="modal-action-btn" style="min-height: 38px; padding: 4px 16px; font-size: 14px; width: auto;">
+      🎯 立即挑戰單元測驗
+    </button>
+  </div>
+
+  <div id="bottom-hud">
+    <button class="filter-btn" data-island="all">🌐 全景</button>
+    <button class="filter-btn" data-island="center">🎤 出道舞台</button>
+    <button class="filter-btn" data-island="math">📐 數學島</button>
+    <button class="filter-btn" data-island="english">🔤 英語島</button>
+    <button class="filter-btn" data-island="science">🔬 自然島</button>
+    <button class="filter-btn" data-island="social">🗺️ 社會島</button>
+    <button class="filter-btn" data-island="chinese">📖 國語島</button>
+  </div>
+
+  <!-- 地標概念詳情彈窗 -->
+  <div id="building-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <button class="modal-close-icon" onclick="document.getElementById('building-modal').classList.add('hidden')">✕</button>
+      <div class="modal-unit-tag" id="modal-unit">單元核心</div>
+      <h2 class="modal-title" id="modal-title">建築名稱</h2>
+      <p class="modal-body" id="modal-summary">概念摘要內容</p>
+      
+      <div style="font-weight: 700; color: #1e293b; margin-bottom: 8px;">📘 考點核心重點：</div>
+      <ul class="modal-details-list" id="modal-details"></ul>
+
+      <button id="modal-quiz-btn" class="modal-action-btn">
+        🚀 進入單元解題挑戰
+      </button>
+    </div>
+  </div>
+
+  <!-- 測驗問答彈窗 (含三階鷹架) -->
+  <div id="quiz-modal" class="modal-overlay hidden">
+    <div class="quiz-card">
+      <button class="modal-close-icon" onclick="document.getElementById('quiz-modal').classList.add('hidden')">✕</button>
+      <div class="quiz-header">
+        <span class="quiz-badge" id="quiz-progress">第 1 / 5 題</span>
+        <span class="quiz-combo-badge" id="quiz-combo" style="display: none;">🔥 3 COMBO!</span>
+        <span class="quiz-badge" id="quiz-score">⭐ 0 分</span>
+      </div>
+
+      <div class="quiz-question-box" id="quiz-question">
+        題目載入中...
+      </div>
+
+      <div class="quiz-options-list" id="quiz-options">
+        <!-- 動態生成選項按鈕 -->
+      </div>
+
+      <!-- 鷹架引導小卡 -->
+      <div class="quiz-hint-card" id="quiz-hint-box" style="display: none;"></div>
+
+      <button id="quiz-next-btn" class="quiz-next-action-btn" style="display: none;">
+        下一題 ➔
+      </button>
+    </div>
+  </div>
+
+  <!-- 通關結算彈窗 -->
+  <div id="result-modal" class="modal-overlay hidden">
+    <div class="modal-card result-card" style="max-width: 640px;">
+      <div class="result-trophy">🏆</div>
+      <h2 class="result-title">挑戰完成！</h2>
+      <div style="font-size: 15px; color: #64748b;">你點亮了知識島嶼的地標光柱！</div>
+      <div class="result-score-large" id="result-score">100 分</div>
+      <div class="result-stats-text" id="result-stars">已收集星星: 5 ⭐</div>
+
+      <!-- 出道榮譽證書畫布容器 -->
+      <div id="cert-canvas-container" style="display: none; margin: 16px 0;">
+        <canvas id="cert-canvas" style="max-width: 100%; height: auto; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);"></canvas>
+        <button id="btn-download-cert" class="modal-action-btn" style="margin-top: 10px; background: linear-gradient(135deg, #10b981, #059669);">
+          📥 下載 K-POP 出道成績單圖片
+        </button>
+      </div>
+
+      <button id="result-close-btn" class="modal-action-btn">
+        🎉 領取獎勵並返回島嶼
+      </button>
+    </div>
+  </div>
+
+  <!-- 練習生 3D 換裝更衣室彈窗 -->
+  <div id="wardrobe-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <button class="modal-close-icon" onclick="document.getElementById('wardrobe-modal').classList.add('hidden')">✕</button>
+      <h2 class="modal-title">✨ 練習生造型更衣室</h2>
+      <p class="modal-body" style="font-size: 14px; margin-bottom: 14px;">自訂你的 3D 練習生專屬造型，即時投放到中央舞台漫遊！</p>
+
+      <div style="font-weight: 700; margin-bottom: 8px;">💇 潮流髮型：</div>
+      <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+        <button class="filter-btn hair-opt-btn" data-hair="0">俐落短髮</button>
+        <button class="filter-btn hair-opt-btn" data-hair="1">韓系微捲</button>
+        <button class="filter-btn hair-opt-btn" data-hair="2">雙馬尾</button>
+        <button class="filter-btn hair-opt-btn" data-hair="3">貓耳造型</button>
+      </div>
+
+      <div style="font-weight: 700; margin-bottom: 8px;">👔 打歌服裝：</div>
+      <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+        <button class="filter-btn outfit-opt-btn" data-outfit="0">櫻花粉裝</button>
+        <button class="filter-btn outfit-opt-btn" data-outfit="1">學院水手</button>
+        <button class="filter-btn outfit-opt-btn" data-outfit="2">傳奇亮片</button>
+        <button class="filter-btn outfit-opt-btn" data-outfit="3">街舞衛衣</button>
+      </div>
+
+      <div style="font-weight: 700; margin-bottom: 8px;">🪄 應援手燈：</div>
+      <div style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;">
+        <button class="filter-btn stick-opt-btn" data-stick="0">粉彩手燈</button>
+        <button class="filter-btn stick-opt-btn" data-stick="1">天際藍燈</button>
+        <button class="filter-btn stick-opt-btn" data-stick="2">璀璨金棒</button>
+      </div>
+
+      <button class="modal-action-btn" onclick="document.getElementById('wardrobe-modal').classList.add('hidden')">
+        💖 保存造型並登島打歌
+      </button>
+    </div>
+  </div>
+
+  <!-- 主入口程式碼 -->
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>
