@@ -23,9 +23,11 @@ export class PlayerController {
       right: false
     };
 
-    this.baseMoveSpeed = 16.0;
+    this.baseMoveSpeed = 13.5;
+    this.sprintMoveSpeed = 19.5;
     this.moveSpeed = this.baseMoveSpeed;
     this.isSprinting = false;
+    this.currentVelocity = new THREE.Vector3(0, 0, 0); // 物理速度慣性向量
     this.targetMovePoint = null; // 點擊地面移動目標
 
     // 垂直跳躍物理
@@ -381,22 +383,19 @@ export class PlayerController {
       this.targetMarker.scale.set(pulse, pulse, pulse);
     }
 
-    // 3. 移動邏輯 (WASD / 點擊尋路)
-    let moving = false;
+    // 3. 移動邏輯 (WASD / 點擊尋路) — 物理慣性加減速
     let moveDir = new THREE.Vector3();
-
     if (this.keys.forward) moveDir.z -= 1;
     if (this.keys.backward) moveDir.z += 1;
     if (this.keys.left) moveDir.x -= 1;
     if (this.keys.right) moveDir.x += 1;
 
-    let targetAngle = null;
+    let desiredVelocity = new THREE.Vector3(0, 0, 0);
 
     if (moveDir.lengthSq() > 0) {
       this.targetMovePoint = null;
       if (this.targetMarker) this.targetMarker.visible = false;
       moveDir.normalize();
-      moving = true;
 
       // 依相機水平朝向計算前進方向 (按 W 永遠是朝畫面正前方前進)
       const camForward = new THREE.Vector3();
@@ -410,57 +409,71 @@ export class PlayerController {
         .addScaledVector(camRight, moveDir.x)
         .normalize();
 
-      this.playerMesh.position.addScaledVector(moveVec, this.moveSpeed * delta);
-      targetAngle = Math.atan2(moveVec.x, moveVec.z);
+      desiredVelocity.copy(moveVec).multiplyScalar(this.moveSpeed);
     } else if (this.targetMovePoint) {
       const diff = new THREE.Vector3().subVectors(this.targetMovePoint, this.playerMesh.position);
       diff.y = 0;
       const dist = diff.length();
 
-      if (dist > 0.6) {
+      if (dist > 0.4) {
         // 靠近目標時平滑減速，避免撞牆般驟停
-        const currentSpeed = dist < 3.0 ? Math.max(5, this.moveSpeed * (dist / 3.0)) : this.moveSpeed;
-        diff.normalize();
-        this.playerMesh.position.addScaledVector(diff, currentSpeed * delta);
-        targetAngle = Math.atan2(diff.x, diff.z);
-        moving = true;
+        const arrivalSpeed = dist < 2.5 ? Math.max(3.5, this.moveSpeed * (dist / 2.5)) : this.moveSpeed;
+        desiredVelocity.copy(diff.normalize()).multiplyScalar(arrivalSpeed);
       } else {
         this.targetMovePoint = null;
         if (this.targetMarker) this.targetMarker.visible = false;
       }
     }
 
-    // 4. 最短弧平滑轉向 (徹底消除跨越 Pi 倒轉抽搐)
-    if (targetAngle !== null && this.dancingTimer <= 0) {
+    // 物理慣性與阻尼平滑插值 (加速起步平順、釋放按鍵自然滑行)
+    const accelFactor = desiredVelocity.lengthSq() > 0.01
+      ? (1 - Math.exp(-15 * delta))
+      : (1 - Math.exp(-12 * delta));
+    this.currentVelocity.lerp(desiredVelocity, accelFactor);
+    this.playerMesh.position.addScaledVector(this.currentVelocity, delta);
+
+    const groundSpeed = new THREE.Vector2(this.currentVelocity.x, this.currentVelocity.z).length();
+    const isMoving = groundSpeed > 0.35;
+
+    // 4. 最短弧平滑轉向 (根據實際運動速度向量方向平滑轉向)
+    if (isMoving && this.dancingTimer <= 0) {
+      const targetAngle = Math.atan2(this.currentVelocity.x, this.currentVelocity.z);
       let diffAngle = (targetAngle - this.playerMesh.rotation.y) % (Math.PI * 2);
       if (diffAngle < -Math.PI) diffAngle += Math.PI * 2;
       if (diffAngle > Math.PI) diffAngle -= Math.PI * 2;
-      this.playerMesh.rotation.y += diffAngle * 0.28;
+      const turnFactor = 1 - Math.exp(-18 * delta);
+      this.playerMesh.rotation.y += diffAngle * turnFactor;
     }
 
-    // 5. 肢體步態動畫 (雙腿與手臂前後交替擺動)
+    // 5. 肢體步態動畫 (步頻嚴格同步真實地面速度，徹底杜絕滑冰感)
     if (this.playerMesh.userData && this.playerMesh.userData.legL) {
       const { legL, legR, armL, armR, body } = this.playerMesh.userData;
-      if (moving && !this.isJumping) {
-        this.walkCycle += delta * (this.moveSpeed > 20 ? 18 : 13);
-        const legAngle = Math.sin(this.walkCycle) * 0.65;
+      if (isMoving && !this.isJumping) {
+        this.walkCycle += delta * groundSpeed * 1.05;
+        const legAngle = Math.sin(this.walkCycle) * 0.52;
         legL.rotation.x = legAngle;
         legR.rotation.x = -legAngle;
-        if (armL) armL.rotation.x = -legAngle * 0.75;
-        if (armR) armR.rotation.x = legAngle * 0.45;
-        if (body) body.rotation.x = 0.08; // 跑步微傾角
+        if (armL) armL.rotation.x = -legAngle * 0.72;
+        if (armR) armR.rotation.x = legAngle * 0.42;
+        if (body) {
+          body.rotation.x = 0.09; // 跑步自然微前傾
+          body.rotation.z = Math.sin(this.walkCycle) * 0.035; // 骨盆左右體重轉移搖擺
+        }
       } else {
-        // 站立平滑復位
-        this.walkCycle = 0;
-        legL.rotation.x = THREE.MathUtils.lerp(legL.rotation.x, 0, 0.2);
-        legR.rotation.x = THREE.MathUtils.lerp(legR.rotation.x, 0, 0.2);
-        if (armL) armL.rotation.x = THREE.MathUtils.lerp(armL.rotation.x, 0, 0.2);
-        if (armR) armR.rotation.x = THREE.MathUtils.lerp(armR.rotation.x, 0, 0.2);
-        if (body) body.rotation.x = THREE.MathUtils.lerp(body.rotation.x, 0, 0.2);
+        // 站立平滑復位 (保留 walkCycle 數值避免角度瞬跳)
+        const damp = 1 - Math.exp(-12 * delta);
+        legL.rotation.x = THREE.MathUtils.lerp(legL.rotation.x, 0, damp);
+        legR.rotation.x = THREE.MathUtils.lerp(legR.rotation.x, 0, damp);
+        if (armL) armL.rotation.x = THREE.MathUtils.lerp(armL.rotation.x, 0, damp);
+        if (armR) armR.rotation.x = THREE.MathUtils.lerp(armR.rotation.x, 0, damp);
+        if (body) {
+          body.rotation.x = THREE.MathUtils.lerp(body.rotation.x, 0, damp);
+          body.rotation.z = THREE.MathUtils.lerp(body.rotation.z, 0, damp);
+        }
       }
     }
 
-    // 6. 垂直跳躍物理
+    // 6. 垂直跳躍物理與擬真骨骼步態起伏
     const groundY = HEX_HEIGHT + 1.2;
     if (this.isJumping) {
       this.jumpVelocity += this.gravity * delta;
@@ -472,11 +485,12 @@ export class PlayerController {
         this.jumpVelocity = 0;
       }
     } else {
-      if (moving) {
-        // 跑步微幅彈跳 (避免過大晃動)
-        this.playerMesh.position.y = groundY + Math.abs(Math.sin(this.walkCycle)) * 0.12;
+      if (isMoving) {
+        // 擬真骨骼起伏：支撐腿垂直時重心最高，步幅延展落地時微降
+        const strideBounce = (1 - Math.abs(Math.sin(this.walkCycle))) * 0.08;
+        this.playerMesh.position.y = groundY + strideBounce;
       } else if (this.dancingTimer <= 0) {
-        this.playerMesh.position.y = groundY;
+        this.playerMesh.position.y = groundY + Math.abs(Math.sin(time * 3)) * 0.06;
       }
     }
 
@@ -490,10 +504,10 @@ export class PlayerController {
 
       // 目標點平滑朝角色移動
       const prevTarget = this.controls.target.clone();
-      this.controls.target.lerp(targetLookAt, 0.14);
+      this.controls.target.lerp(targetLookAt, 1 - Math.exp(-12 * delta));
       const targetDelta = new THREE.Vector3().subVectors(this.controls.target, prevTarget);
 
-      // 相機與目標點同步平移，保留玩家自訂視角，完全杜絕旋轉死循環
+      // 相機與目標點同步平移，保留玩家自訂視角
       this.camera.position.add(targetDelta);
 
       // 若距離異常過遠（如超出邊界），平緩校正
