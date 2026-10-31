@@ -122,7 +122,7 @@ export class ModelBuilder {
     group.add(steps);
 
     // 霓虹應援發光環
-    const neonRing = new THREE.Mesh(GeoPool.torus, Materials.neonPink);
+    const neonRing = new THREE.Mesh(GeoPool.torus, Materials.center);
     neonRing.scale.set(12.5, 12.5, 0.5);
     neonRing.rotation.x = Math.PI / 2;
     neonRing.position.y = 3.0;
@@ -208,7 +208,7 @@ export class ModelBuilder {
 
   createRainbowArch() {
     const group = new THREE.Group();
-    const arch = new THREE.Mesh(GeoPool.torus, Materials.mathAccent);
+    const arch = new THREE.Mesh(GeoPool.torus, Materials.math);
     arch.scale.set(7, 7, 1);
     arch.position.y = 6;
     arch.rotation.y = Math.PI / 4;
@@ -349,7 +349,7 @@ export class ModelBuilder {
     workshop.position.y = 3;
     group.add(workshop);
 
-    const roof = new THREE.Mesh(GeoPool.cone, Materials.roofRed);
+    const roof = new THREE.Mesh(GeoPool.cone, Materials.centerAccent);
     roof.scale.set(6.5, 4, 6.5);
     roof.position.y = 8;
     roof.rotation.y = Math.PI / 4;
@@ -447,7 +447,7 @@ export class ModelBuilder {
     group.add(roof);
 
     // 內部培育奇蹟發光植栽
-    const plant = new THREE.Mesh(GeoPool.lowSphere, Materials.scienceAccent);
+    const plant = new THREE.Mesh(GeoPool.lowSphere, Materials.science);
     plant.scale.set(2.8, 3.2, 2.8);
     plant.position.y = 3.6;
     group.add(plant);
@@ -531,7 +531,7 @@ export class ModelBuilder {
     group.add(tower);
 
     // 風向儀箭頭
-    const arrow = new THREE.Mesh(GeoPool.cone, Materials.roofRed);
+    const arrow = new THREE.Mesh(GeoPool.cone, Materials.centerAccent);
     arrow.scale.set(1.2, 3, 1.2);
     arrow.position.set(0, 13, 0);
     arrow.rotation.z = -Math.PI / 2;
@@ -566,7 +566,7 @@ export class ModelBuilder {
     group.add(pavilion);
 
     // 傳統飛簷屋頂
-    const roof = new THREE.Mesh(GeoPool.cone, Materials.roofRed);
+    const roof = new THREE.Mesh(GeoPool.cone, Materials.centerAccent);
     roof.scale.set(7.5, 4, 7.5);
     roof.position.y = 9;
     roof.rotation.y = Math.PI / 6;
@@ -593,12 +593,12 @@ export class ModelBuilder {
   createStrategyPaifang() {
     const group = new THREE.Group();
     // 兩側紅色大柱
-    const colL = new THREE.Mesh(GeoPool.cylinder, Materials.roofRed);
+    const colL = new THREE.Mesh(GeoPool.cylinder, Materials.centerAccent);
     colL.scale.set(0.8, 9, 0.8);
     colL.position.set(-3.5, 4.5, 0);
     group.add(colL);
 
-    const colR = new THREE.Mesh(GeoPool.cylinder, Materials.roofRed);
+    const colR = new THREE.Mesh(GeoPool.cylinder, Materials.centerAccent);
     colR.scale.set(0.8, 9, 0.8);
     colR.position.set(3.5, 4.5, 0);
     group.add(colR);
@@ -614,7 +614,7 @@ export class ModelBuilder {
   createInkstonePavilion() {
     const group = new THREE.Group();
     // 硯台形底座
-    const inkstone = new THREE.Mesh(GeoPool.cylinder, Materials.dirt);
+    const inkstone = new THREE.Mesh(GeoPool.cylinder, Materials.darkRock);
     inkstone.scale.set(6, 2, 6);
     inkstone.position.y = 1;
     group.add(inkstone);

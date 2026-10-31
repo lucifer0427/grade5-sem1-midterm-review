@@ -227,7 +227,7 @@ export class WorldManager {
     this.buildingMeshes.set(buildingData.id, hitbox);
 
     // 建立主島核心地標頂部懸浮指示看板 (避免過多 Billboard 造成 Draw Calls 超標)
-    const primaryLandmarks = ['center-stage', 'math-linegraph'];
+    const primaryLandmarks = ['center-stage'];
     if (primaryLandmarks.includes(buildingData.id)) {
       this.createFloatingBadge(buildingData, islandData, hitbox);
     }

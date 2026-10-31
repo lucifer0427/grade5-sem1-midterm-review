@@ -1,10 +1,15 @@
 // environment.js: 日夜光影、太陽/月亮、霧氣與海洋水面
 import * as THREE from 'three';
+import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 import { GeoPool, Materials } from './kit.js';
 
 export class EnvironmentManager {
   constructor(scene) {
     this.scene = scene;
+    this._dummyMatrix = new THREE.Matrix4();
+    this._dummyPos = new THREE.Vector3();
+    this._dummyQuat = new THREE.Quaternion();
+    this._dummyScale = new THREE.Vector3(1, 1, 1);
     this.initLights();
     this.initOcean();
     this.initFog();
@@ -12,10 +17,6 @@ export class EnvironmentManager {
   }
 
   initClouds() {
-    this.cloudsGroup = new THREE.Group();
-    this.clouds = [];
-    this.scene.add(this.cloudsGroup);
-
     const cloudData = [
       { x: -120, y: 55, z: -80, speed: 2.2 },
       { x: -40, y: 62, z: -130, speed: 1.8 },
@@ -26,24 +27,26 @@ export class EnvironmentManager {
       { x: -140, y: 48, z: 20, speed: 2.4 }
     ];
 
-    cloudData.forEach((cd) => {
-      const cloud = this.createPuffyCloud();
-      cloud.position.set(cd.x, cd.y, cd.z);
-      this.cloudsGroup.add(cloud);
-      this.clouds.push({ mesh: cloud, speed: cd.speed });
-    });
-  }
-
-  // 4 塊微扁球組合低多邊形蓬鬆雲
-  createPuffyCloud() {
-    const group = new THREE.Group();
+    // 預先合併 4 塊微扁球為單一蓬鬆雲幾何體，並以 InstancedMesh 渲染全場雲層 (僅 1 個 Draw Call)
+    const geos = [];
     for (let i = 0; i < 4; i++) {
-      const part = new THREE.Mesh(GeoPool.lowSphere, Materials.cloud);
-      part.scale.set(4.5 + (i % 2) * 1.5, 2.8, 3.8);
-      part.position.set((i - 1.5) * 3.8, (i === 1 || i === 2 ? 1.2 : 0), (i % 2 === 0 ? 1 : -1));
-      group.add(part);
+      const g = GeoPool.lowSphere.clone();
+      g.scale(4.5 + (i % 2) * 1.5, 2.8, 3.8);
+      g.translate((i - 1.5) * 3.8, (i === 1 || i === 2 ? 1.2 : 0), (i % 2 === 0 ? 1 : -1));
+      geos.push(g);
     }
-    return group;
+    const cloudGeo = BufferGeometryUtils.mergeGeometries(geos);
+
+    this.cloudMesh = new THREE.InstancedMesh(cloudGeo, Materials.cloud, cloudData.length);
+    this.cloudMesh.name = 'instancedClouds';
+    this.clouds = cloudData.map((cd, i) => {
+      this._dummyPos.set(cd.x, cd.y, cd.z);
+      this._dummyMatrix.compose(this._dummyPos, this._dummyQuat, this._dummyScale);
+      this.cloudMesh.setMatrixAt(i, this._dummyMatrix);
+      return { ...cd };
+    });
+    this.cloudMesh.instanceMatrix.needsUpdate = true;
+    this.scene.add(this.cloudMesh);
   }
 
   initLights() {
@@ -134,14 +137,17 @@ export class EnvironmentManager {
   }
 
   update(time, delta = 0.016) {
-    // 1. 浮空蓬鬆雲朵緩慢巡航
-    if (this.clouds) {
-      this.clouds.forEach(c => {
-        c.mesh.position.x += c.speed * delta * 2.2;
-        if (c.mesh.position.x > 220) {
-          c.mesh.position.x = -220;
-        }
-      });
+    // 1. 浮空蓬鬆雲朵緩慢巡航 (實例化網格零 GC 高效更新)
+    if (this.clouds && this.cloudMesh) {
+      for (let i = 0; i < this.clouds.length; i++) {
+        const c = this.clouds[i];
+        c.x += c.speed * delta * 2.2;
+        if (c.x > 220) c.x = -220;
+        this._dummyPos.set(c.x, c.y, c.z);
+        this._dummyMatrix.compose(this._dummyPos, this._dummyQuat, this._dummyScale);
+        this.cloudMesh.setMatrixAt(i, this._dummyMatrix);
+      }
+      this.cloudMesh.instanceMatrix.needsUpdate = true;
     }
 
     // 2. 舞台聚光燈旋轉動態

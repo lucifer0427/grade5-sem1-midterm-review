@@ -90,7 +90,7 @@ export class DecorManager {
             addGeom(Materials.wood, blockTrunkGeo, m);
 
             // 雙層樹冠
-            const foliageMat = rng() > 0.5 ? Materials.science : Materials.scienceAccent;
+            const foliageMat = Materials.science;
             m.compose(new THREE.Vector3(tx, HEX_HEIGHT + 3.2 * scale, tz), q, new THREE.Vector3(scale, scale, scale));
             addGeom(foliageMat, cone1Geo, m);
 
@@ -104,7 +104,7 @@ export class DecorManager {
             m.compose(new THREE.Vector3(tx, HEX_HEIGHT + 1.2 * scale, tz), qIdentity, new THREE.Vector3(scale, scale, scale));
             addGeom(Materials.wood, roundTrunkGeo, m);
 
-            const foliageMat = rng() > 0.5 ? Materials.science : Materials.scienceAccent;
+            const foliageMat = Materials.science;
             m.compose(new THREE.Vector3(tx, HEX_HEIGHT + 3.2 * scale, tz), qIdentity, new THREE.Vector3(1.8 * scale, 1.8 * scale, 1.8 * scale));
             addGeom(foliageMat, GeoPool.lowSphere, m);
 
@@ -128,7 +128,7 @@ export class DecorManager {
           const fDist = HEX_RADIUS * (0.3 + rng() * 0.4);
           const fx = x + Math.cos(fAngle) * fDist;
           const fz = z + Math.sin(fAngle) * fDist;
-          const mats = [Materials.flowerPink, Materials.flowerYellow, Materials.flowerBlue];
+          const mats = [Materials.flowerPink, Materials.flowerYellow];
           for (let pIdx = 0; pIdx < 4; pIdx++) {
             const fMat = mats[pIdx % mats.length];
             const px = fx + (rng() - 0.5) * 1.6;
@@ -172,13 +172,12 @@ export class DecorManager {
           const lx = x + Math.cos(lAngle) * lDist;
           const lz = z + Math.sin(lAngle) * lDist;
 
-          // 燈柱
+          // 燈柱與燈罩
           m.compose(new THREE.Vector3(lx, HEX_HEIGHT + 2.25, lz), qIdentity, new THREE.Vector3(1, 1, 1));
-          addGeom(Materials.dirt, lampPoleGeo, m);
+          addGeom(Materials.wood, lampPoleGeo, m);
 
-          // 燈罩
           m.compose(new THREE.Vector3(lx, HEX_HEIGHT + 4.6, lz), qIdentity, new THREE.Vector3(1, 1, 1));
-          addGeom(Materials.dirt, lampCapGeo, m);
+          addGeom(Materials.wood, lampCapGeo, m);
 
           // 發光燈泡
           m.compose(new THREE.Vector3(lx, HEX_HEIGHT + 4.3, lz), qIdentity, new THREE.Vector3(1, 1, 1));
