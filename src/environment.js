@@ -8,6 +8,42 @@ export class EnvironmentManager {
     this.initLights();
     this.initOcean();
     this.initFog();
+    this.initClouds();
+  }
+
+  initClouds() {
+    this.cloudsGroup = new THREE.Group();
+    this.clouds = [];
+    this.scene.add(this.cloudsGroup);
+
+    const cloudData = [
+      { x: -120, y: 55, z: -80, speed: 2.2 },
+      { x: -40, y: 62, z: -130, speed: 1.8 },
+      { x: 60, y: 50, z: -70, speed: 2.5 },
+      { x: 130, y: 58, z: 20, speed: 2.0 },
+      { x: 50, y: 52, z: 110, speed: 2.3 },
+      { x: -80, y: 60, z: 90, speed: 1.9 },
+      { x: -140, y: 48, z: 20, speed: 2.4 }
+    ];
+
+    cloudData.forEach((cd) => {
+      const cloud = this.createPuffyCloud();
+      cloud.position.set(cd.x, cd.y, cd.z);
+      this.cloudsGroup.add(cloud);
+      this.clouds.push({ mesh: cloud, speed: cd.speed });
+    });
+  }
+
+  // 4 塊微扁球組合低多邊形蓬鬆雲
+  createPuffyCloud() {
+    const group = new THREE.Group();
+    for (let i = 0; i < 4; i++) {
+      const part = new THREE.Mesh(GeoPool.lowSphere, Materials.cloud);
+      part.scale.set(4.5 + (i % 2) * 1.5, 2.8, 3.8);
+      part.position.set((i - 1.5) * 3.8, (i === 1 || i === 2 ? 1.2 : 0), (i % 2 === 0 ? 1 : -1));
+      group.add(part);
+    }
+    return group;
   }
 
   initLights() {
@@ -97,8 +133,18 @@ export class EnvironmentManager {
     }
   }
 
-  update(time) {
-    // 舞台聚光燈旋轉動態
+  update(time, delta = 0.016) {
+    // 1. 浮空蓬鬆雲朵緩慢巡航
+    if (this.clouds) {
+      this.clouds.forEach(c => {
+        c.mesh.position.x += c.speed * delta * 2.2;
+        if (c.mesh.position.x > 220) {
+          c.mesh.position.x = -220;
+        }
+      });
+    }
+
+    // 2. 舞台聚光燈旋轉動態
     if (this.spotLight1 && this.spotLight2) {
       const r = 12;
       this.spotLight1.target.position.x = Math.cos(time * 2) * r;

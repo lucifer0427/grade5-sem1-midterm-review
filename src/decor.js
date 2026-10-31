@@ -41,10 +41,9 @@ export class DecorManager {
       const cells = island.cells;
 
       cells.forEach(([q, r], cellIdx) => {
-        // 第一格通常放建築，其餘格子散落樹木與路燈
         const { x, z } = axialToWorld(q, r);
 
-        // 每個六角格隨機在周圍邊緣種 1~2 棵積木樹
+        // 1. 散落多樣化植被 (針葉松、日系圓球樹、粉彩櫻花樹)
         const treeCount = isCenter ? 1 : Math.floor(rng() * 2) + 1;
         for (let i = 0; i < treeCount; i++) {
           const angle = rng() * Math.PI * 2;
@@ -52,15 +51,42 @@ export class DecorManager {
           const tx = x + Math.cos(angle) * dist;
           const tz = z + Math.sin(angle) * dist;
 
-          const tree = this.createBlockTree(rng);
+          const treeType = rng();
+          let tree;
+          if (treeType < 0.45) {
+            tree = this.createBlockTree(rng); // 針葉松
+          } else if (treeType < 0.8) {
+            tree = this.createRoundTree(rng); // 日系圓球樹
+          } else {
+            tree = this.createSakuraTree(rng); // 粉彩櫻花樹
+          }
           tree.position.set(tx, HEX_HEIGHT, tz);
           this.decorGroup.add(tree);
         }
 
-        // 部分格子生成帶夜間照明的路燈
+        // 2. 邊緣草地点綴微縮小花簇 (Flower Clusters)
+        if (rng() > 0.35 && !isCenter) {
+          const fAngle = rng() * Math.PI * 2;
+          const fDist = HEX_RADIUS * (0.3 + rng() * 0.4);
+          const flowers = this.createFlowerCluster(rng);
+          flowers.position.set(x + Math.cos(fAngle) * fDist, HEX_HEIGHT + 0.1, z + Math.sin(fAngle) * fDist);
+          this.decorGroup.add(flowers);
+        }
+
+        // 3. 部分格子生成公園長椅 (Park Bench)
+        if (rng() > 0.7 && !isCenter) {
+          const bAngle = rng() * Math.PI * 2;
+          const bDist = HEX_RADIUS * 0.65;
+          const bench = this.createBench();
+          bench.position.set(x + Math.cos(bAngle) * bDist, HEX_HEIGHT, z + Math.sin(bAngle) * bDist);
+          bench.rotation.y = bAngle + Math.PI / 2;
+          this.decorGroup.add(bench);
+        }
+
+        // 4. 夜間發光微縮路燈
         if (rng() > 0.45) {
           const lAngle = rng() * Math.PI * 2;
-          const lDist = HEX_RADIUS * 0.7;
+          const lDist = HEX_RADIUS * 0.72;
           const lx = x + Math.cos(lAngle) * lDist;
           const lz = z + Math.sin(lAngle) * lDist;
 
@@ -71,6 +97,87 @@ export class DecorManager {
         }
       });
     });
+  }
+
+  // 日系圓球積木樹 (微縮玩具箱治癒感)
+  createRoundTree(rng) {
+    const group = new THREE.Group();
+    const scale = 0.85 + rng() * 0.35;
+
+    // 樹幹
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 2.4, 5), Materials.wood);
+    trunk.position.y = 1.2;
+    trunk.castShadow = true;
+    group.add(trunk);
+
+    // 圓球樹冠 (2~3 顆扁球重疊)
+    const foliageMat = rng() > 0.5 ? Materials.science : Materials.scienceAccent;
+    const topSphere = new THREE.Mesh(GeoPool.lowSphere, foliageMat);
+    topSphere.scale.set(1.8, 1.8, 1.8);
+    topSphere.position.y = 3.2;
+    topSphere.castShadow = true;
+    group.add(topSphere);
+
+    const subSphere = new THREE.Mesh(GeoPool.lowSphere, foliageMat);
+    subSphere.scale.set(1.2, 1.1, 1.2);
+    subSphere.position.set(0.6, 2.6, 0.4);
+    subSphere.castShadow = true;
+    group.add(subSphere);
+
+    group.scale.set(scale, scale, scale);
+    return group;
+  }
+
+  // 粉彩櫻花小樹
+  createSakuraTree(rng) {
+    const group = new THREE.Group();
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.38, 2.2, 4), Materials.wood);
+    trunk.position.y = 1.1;
+    group.add(trunk);
+
+    const sakuraMat = Materials.flowerPink;
+    const crown = new THREE.Mesh(GeoPool.lowSphere, sakuraMat);
+    crown.scale.set(1.7, 1.5, 1.7);
+    crown.position.y = 3.0;
+    crown.castShadow = true;
+    group.add(crown);
+
+    group.scale.set(0.9, 0.9, 0.9);
+    return group;
+  }
+
+  // 彩色小花簇
+  createFlowerCluster(rng) {
+    const group = new THREE.Group();
+    const mats = [Materials.flowerPink, Materials.flowerYellow, Materials.flowerBlue];
+    for (let i = 0; i < 4; i++) {
+      const fMat = mats[i % mats.length];
+      const petal = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.1, 5), fMat);
+      petal.position.set((rng() - 0.5) * 1.6, 0.05, (rng() - 0.5) * 1.6);
+      group.add(petal);
+    }
+    return group;
+  }
+
+  // 公園木質長椅
+  createBench() {
+    const group = new THREE.Group();
+    // 椅面
+    const seat = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.15, 0.6), Materials.wood);
+    seat.position.y = 0.5;
+    group.add(seat);
+    // 椅背
+    const back = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.5, 0.12), Materials.wood);
+    back.position.set(0, 0.8, -0.24);
+    group.add(back);
+    // 鐵件椅腳
+    const leg1 = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.5, 4), Materials.darkRock);
+    leg1.position.set(-0.6, 0.25, 0);
+    const leg2 = leg1.clone();
+    leg2.position.x = 0.6;
+    group.add(leg1);
+    group.add(leg2);
+    return group;
   }
 
   // 雙層圓錐積木樹

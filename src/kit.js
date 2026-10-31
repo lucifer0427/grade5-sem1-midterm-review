@@ -34,10 +34,22 @@ export const Materials = {
   }),
   // 六角地塊基座 (草地/泥土)
   grass: new THREE.MeshLambertMaterial({ color: 0x86efac }),
-  dirt: new THREE.MeshLambertMaterial({ color: 0xca8a04 }),
+  dirt: new THREE.MeshLambertMaterial({ color: 0xb45309 }),
+  darkRock: new THREE.MeshLambertMaterial({ color: 0x334155 }),
+  sandRim: new THREE.MeshLambertMaterial({ color: 0xfef08a }),
   rock: new THREE.MeshLambertMaterial({ color: 0x94a3b8 }),
-  path: new THREE.MeshLambertMaterial({ color: 0xfef08a }),
-  bridge: new THREE.MeshLambertMaterial({ color: 0xfde047 }),
+  path: new THREE.MeshLambertMaterial({ color: 0xfde68a }),
+  bridge: new THREE.MeshLambertMaterial({ color: 0xfcd34d }),
+
+  // 白雲與浪花
+  cloud: new THREE.MeshLambertMaterial({ color: 0xffffff, transparent: true, opacity: 0.92 }),
+  foam: new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 }),
+
+  // 窗戶與微縮夜景發光
+  windowGlow: new THREE.MeshBasicMaterial({ color: 0xfef08a }),
+  flowerPink: new THREE.MeshLambertMaterial({ color: 0xf472b6 }),
+  flowerYellow: new THREE.MeshLambertMaterial({ color: 0xfde047 }),
+  flowerBlue: new THREE.MeshLambertMaterial({ color: 0x60a5fa }),
 
   // 學科代表色 (建築主體)
   math: new THREE.MeshLambertMaterial({ color: 0x3b82f6 }),

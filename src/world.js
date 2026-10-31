@@ -25,6 +25,8 @@ export class WorldManager {
     this.buildingsGroup = new THREE.Group();
     this.bridgesGroup = new THREE.Group();
     this.beaconsGroup = new THREE.Group();
+    this.badgesGroup = new THREE.Group();
+    this.foamRings = []; // 水面白色浪花圈
     
     this.interactiveObjects = []; // 提供 Raycaster 拾取
     this.buildingMeshes = new Map(); // id -> Mesh
@@ -34,6 +36,7 @@ export class WorldManager {
     this.scene.add(this.buildingsGroup);
     this.scene.add(this.bridgesGroup);
     this.scene.add(this.beaconsGroup);
+    this.scene.add(this.badgesGroup);
   }
 
   buildWorld() {
@@ -55,10 +58,20 @@ export class WorldManager {
         sumX += x;
         sumZ += z;
 
-        // 生成六角地塊柱體
+        // 1. 六角底層岩石基座 (深色岩壁)
+        const baseH = HEX_HEIGHT * 0.7;
+        const baseMesh = new THREE.Mesh(GeoPool.hexCylinder, Materials.darkRock);
+        baseMesh.scale.set(HEX_RADIUS * 0.99, baseH, HEX_RADIUS * 0.99);
+        baseMesh.position.set(x, baseH / 2, z);
+        baseMesh.rotation.y = Math.PI / 6;
+        baseMesh.receiveShadow = true;
+        this.islandGroup.add(baseMesh);
+
+        // 2. 六角頂層地表柱體 (鮮明草皮/舞台粉)
+        const topH = HEX_HEIGHT * 0.35;
         const hexMesh = new THREE.Mesh(GeoPool.hexCylinder, cellMaterial);
-        hexMesh.scale.set(HEX_RADIUS * 0.98, HEX_HEIGHT, HEX_RADIUS * 0.98);
-        hexMesh.position.set(x, HEX_HEIGHT / 2, z);
+        hexMesh.scale.set(HEX_RADIUS * 0.96, topH, HEX_RADIUS * 0.96);
+        hexMesh.position.set(x, HEX_HEIGHT - topH / 2, z);
         hexMesh.rotation.y = Math.PI / 6;
         hexMesh.castShadow = true;
         hexMesh.receiveShadow = true;
@@ -72,12 +85,20 @@ export class WorldManager {
         this.islandGroup.add(hexMesh);
         this.interactiveObjects.push(hexMesh);
 
-        // 地塊頂部鑲邊
-        const topRim = new THREE.Mesh(GeoPool.hexCylinder, Materials.whiteWall);
-        topRim.scale.set(HEX_RADIUS * 0.94, 0.4, HEX_RADIUS * 0.94);
-        topRim.position.set(x, HEX_HEIGHT + 0.2, z);
+        // 3. 地塊邊框頂部飾邊 (暖白/沙灘金色細圈)
+        const topRim = new THREE.Mesh(GeoPool.hexCylinder, Materials.sandRim);
+        topRim.scale.set(HEX_RADIUS * 0.93, 0.35, HEX_RADIUS * 0.93);
+        topRim.position.set(x, HEX_HEIGHT + 0.18, z);
         topRim.rotation.y = Math.PI / 6;
         this.islandGroup.add(topRim);
+
+        // 4. 水面白色泡沫浪花圈 (Shore Foam Ring: 微縮模型玩具箱質感關鍵)
+        const foamMesh = new THREE.Mesh(GeoPool.hexCylinder, Materials.foam);
+        foamMesh.scale.set(HEX_RADIUS * 1.05, 0.15, HEX_RADIUS * 1.05);
+        foamMesh.position.set(x, 1.05, z);
+        foamMesh.rotation.y = Math.PI / 6;
+        this.islandGroup.add(foamMesh);
+        this.foamRings.push({ mesh: foamMesh, baseX: HEX_RADIUS * 1.05, baseZ: HEX_RADIUS * 1.05, offset: (q * 3 + r * 5) % 10 });
       });
 
       const centerX = sumX / count;
@@ -148,6 +169,75 @@ export class WorldManager {
     this.interactiveObjects.push(mesh);
     this.buildingMeshes.set(buildingData.id, mesh);
     this.buildingsGroup.add(mesh);
+
+    // 建立 3D 頂部懸浮指示看板 (Billboard Badge)
+    this.createFloatingBadge(buildingData, islandData, mesh);
+  }
+
+  // 繪製政策島風格懸浮指示卡 (Canvas Texture Billboard)
+  createFloatingBadge(buildingData, islandData, mesh) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 72;
+    const ctx = canvas.getContext('2d');
+
+    // 背景白色圓角膠囊
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.beginPath();
+    ctx.roundRect(8, 8, 240, 56, 28);
+    ctx.fill();
+
+    // 邊框
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // 科目彩色左側裝飾條
+    const subjectColors = {
+      math: '#3b82f6',
+      english: '#eab308',
+      science: '#10b981',
+      social: '#f97316',
+      chinese: '#8b5cf6',
+      center: '#ec4899'
+    };
+    ctx.fillStyle = subjectColors[islandData.id] || '#64748b';
+    ctx.beginPath();
+    ctx.arc(36, 36, 12, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 建築物名稱文字
+    ctx.fillStyle = '#0f172a';
+    ctx.font = 'bold 24px "PingFang TC", "Microsoft JhengHei", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    
+    // 截斷過長名稱
+    let displayName = buildingData.name;
+    if (displayName.length > 7) displayName = displayName.slice(0, 6) + '..';
+    ctx.fillText(displayName, 58, 36);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.minFilter = THREE.LinearFilter;
+
+    const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true });
+    const sprite = new THREE.Sprite(spriteMat);
+    sprite.scale.set(10, 2.8, 1);
+    sprite.position.set(mesh.position.x, mesh.position.y + 20, mesh.position.z);
+    sprite.userData = mesh.userData;
+
+    this.badgesGroup.add(sprite);
+    this.interactiveObjects.push(sprite);
+  }
+
+  // 每幀水面浪花呼吸與動態更新
+  update(delta, time) {
+    // 1. 水面泡沫圈自然呼吸
+    this.foamRings.forEach(item => {
+      const scaleFactor = 1.0 + Math.sin(time * 2.5 + item.offset) * 0.04;
+      item.mesh.scale.x = item.baseX * scaleFactor;
+      item.mesh.scale.z = item.baseZ * scaleFactor;
+    });
   }
 
   // 點亮建築永恆光柱 (通關獎勵)

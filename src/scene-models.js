@@ -124,10 +124,15 @@ export class ModelBuilder {
   // =====================
   createCenterStage() {
     const group = new THREE.Group();
-    // 圓形主打歌台
+    // 圓形主打歌台 (雙層粉色帶金邊)
+    const baseStage = new THREE.Mesh(GeoPool.cylinder, Materials.darkRock);
+    baseStage.scale.set(13.5, 1.2, 13.5);
+    baseStage.position.y = 0.6;
+    group.add(baseStage);
+
     const stage = new THREE.Mesh(GeoPool.cylinder, Materials.centerAccent);
-    stage.scale.set(12, 2.5, 12);
-    stage.position.y = 1.25;
+    stage.scale.set(12, 2.2, 12);
+    stage.position.y = 1.8;
     group.add(stage);
 
     // T 型延伸跑道
@@ -136,12 +141,37 @@ export class ModelBuilder {
     runway.position.set(0, 1.2, 10);
     group.add(runway);
 
+    // 走道前端台階
+    const steps = new THREE.Mesh(GeoPool.box, Materials.center);
+    steps.scale.set(8, 0.8, 2.5);
+    steps.position.set(0, 0.4, 17.5);
+    group.add(steps);
+
     // 霓虹應援發光環
     const neonRing = new THREE.Mesh(GeoPool.torus, Materials.neonPink);
-    neonRing.scale.set(13, 13, 0.5);
+    neonRing.scale.set(12.5, 12.5, 0.5);
     neonRing.rotation.x = Math.PI / 2;
-    neonRing.position.y = 2.6;
+    neonRing.position.y = 3.0;
     group.add(neonRing);
+
+    // 背景巨型 K-POP 弧形 LED 霓虹主螢幕
+    const screenWall = new THREE.Mesh(new THREE.CylinderGeometry(11, 11, 8, 16, 1, true, Math.PI * 0.75, Math.PI * 0.5), Materials.neonCyan);
+    screenWall.position.set(0, 7, -2);
+    group.add(screenWall);
+
+    // 舞台兩側大型立體重低音音箱
+    [-8, 8].forEach(xOff => {
+      const spkBox = new THREE.Mesh(GeoPool.box, Materials.darkRock);
+      spkBox.scale.set(2.4, 4.5, 2.4);
+      spkBox.position.set(xOff, 2.25, 4);
+      group.add(spkBox);
+
+      const spkCone = new THREE.Mesh(GeoPool.cylinder, Materials.whiteWall);
+      spkCone.scale.set(0.9, 0.1, 0.9);
+      spkCone.position.set(xOff, 2.5, 5.25);
+      spkCone.rotation.x = Math.PI / 2;
+      group.add(spkCone);
+    });
 
     // 4 座舞台聚光燈柱
     const angles = [0, Math.PI / 2, Math.PI, (Math.PI * 3) / 2];
@@ -281,23 +311,43 @@ export class ModelBuilder {
   // =====================
   createClockTower() {
     const group = new THREE.Group();
+    // 塔基
+    const base = new THREE.Mesh(GeoPool.box, Materials.darkRock);
+    base.scale.set(6, 2, 6);
+    base.position.y = 1;
+    group.add(base);
+
     const tower = new THREE.Mesh(GeoPool.box, Materials.whiteWall);
     tower.scale.set(5, 14, 5);
-    tower.position.y = 7;
+    tower.position.y = 8;
     group.add(tower);
 
     const roof = new THREE.Mesh(GeoPool.cone, Materials.english);
-    roof.scale.set(4, 5, 4);
-    roof.position.y = 16.5;
+    roof.scale.set(4.2, 5, 4.2);
+    roof.position.y = 17.5;
     roof.rotation.y = Math.PI / 4;
     group.add(roof);
 
-    // 四面鐘錶
-    const clock = new THREE.Mesh(GeoPool.cylinder, Materials.gold);
-    clock.scale.set(1.8, 0.3, 1.8);
-    clock.position.set(0, 12, 2.6);
-    clock.rotation.x = Math.PI / 2;
-    group.add(clock);
+    // 避雷金針塔尖
+    const spire = new THREE.Mesh(GeoPool.cylinder, Materials.gold);
+    spire.scale.set(0.18, 4, 0.18);
+    spire.position.y = 21;
+    group.add(spire);
+
+    // 四面鐘錶 (前後左右四面皆有發光金盤)
+    [
+      { x: 0, z: 2.55, rotY: 0 },
+      { x: 0, z: -2.55, rotY: Math.PI },
+      { x: 2.55, z: 0, rotY: Math.PI / 2 },
+      { x: -2.55, z: 0, rotY: -Math.PI / 2 }
+    ].forEach(face => {
+      const clock = new THREE.Mesh(GeoPool.cylinder, Materials.windowGlow);
+      clock.scale.set(1.6, 0.2, 1.6);
+      clock.position.set(face.x, 12.5, face.z);
+      clock.rotation.x = Math.PI / 2;
+      clock.rotation.z = face.rotY;
+      group.add(clock);
+    });
     return group;
   }
 
@@ -403,15 +453,35 @@ export class ModelBuilder {
 
   createGreenhouse() {
     const group = new THREE.Group();
+    // 溫室白色鋼構基座
+    const base = new THREE.Mesh(GeoPool.box, Materials.whiteWall);
+    base.scale.set(8.4, 1.2, 8.4);
+    base.position.y = 0.6;
+    group.add(base);
+
+    // 半透明透光玻璃花房
     const greenhouse = new THREE.Mesh(GeoPool.box, Materials.glass);
-    greenhouse.scale.set(8, 6, 8);
-    greenhouse.position.y = 3;
+    greenhouse.scale.set(8, 5.5, 8);
+    greenhouse.position.y = 3.8;
     group.add(greenhouse);
 
+    // 人字型人造屋頂鋼樑
+    const roof = new THREE.Mesh(GeoPool.cone, Materials.glass);
+    roof.scale.set(6, 3, 6);
+    roof.position.y = 7.8;
+    roof.rotation.y = Math.PI / 4;
+    group.add(roof);
+
+    // 內部培育奇蹟發光植栽
+    const plant = new THREE.Mesh(GeoPool.lowSphere, Materials.scienceAccent);
+    plant.scale.set(2.8, 3.2, 2.8);
+    plant.position.y = 3.6;
+    group.add(plant);
+
     // 頂部風力傳播旋翼模型
-    const propeller = new THREE.Mesh(GeoPool.box, Materials.whiteWall);
-    propeller.scale.set(8, 0.3, 1);
-    propeller.position.y = 7.5;
+    const propeller = new THREE.Mesh(GeoPool.box, Materials.gold);
+    propeller.scale.set(8.5, 0.25, 0.8);
+    propeller.position.y = 9.5;
     group.add(propeller);
     return group;
   }

@@ -656,10 +656,11 @@ export class App {
     }
 
     this.controls.update();
-    this.environment.update(elapsedTime);
+    this.environment.update(elapsedTime, delta);
     this.resolutionCtrl.update(delta);
 
     // Heart Island 沙盒生態每幀更新
+    if (this.world) this.world.update(delta, elapsedTime);
     const isNight = this.currentHour >= 19 || this.currentHour < 6;
     if (this.decor) this.decor.update(elapsedTime, isNight);
     if (this.people) this.people.update(delta, elapsedTime);
