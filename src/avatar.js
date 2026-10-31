@@ -105,25 +105,55 @@ export class AvatarManager {
     body.position.y = 1.35;
     root.add(body);
 
-    // 3. 雙腿
+    // 3. 雙腿 (以髖部頂端為樞軸，支援自然奔跑交替擺動)
     const legGeo = new THREE.BoxGeometry(0.22, 0.8, 0.22);
-    const legL = new THREE.Mesh(legGeo, Materials.whiteWall);
-    legL.position.set(-0.22, 0.4, 0);
-    const legR = new THREE.Mesh(legGeo, Materials.whiteWall);
-    legR.position.set(0.22, 0.4, 0);
-    root.add(legL, legR);
 
-    // 4. 手持專屬應援棒
+    const legGroupL = new THREE.Group();
+    legGroupL.position.set(-0.24, 0.8, 0);
+    const legL = new THREE.Mesh(legGeo, Materials.whiteWall);
+    legL.position.y = -0.4;
+    legL.castShadow = true;
+    legGroupL.add(legL);
+
+    const legGroupR = new THREE.Group();
+    legGroupR.position.set(0.24, 0.8, 0);
+    const legR = new THREE.Mesh(legGeo, Materials.whiteWall);
+    legR.position.y = -0.4;
+    legR.castShadow = true;
+    legGroupR.add(legR);
+
+    root.add(legGroupL, legGroupR);
+
+    // 4. 左臂 (自然前後擺動)
+    const armGeo = new THREE.BoxGeometry(0.18, 0.7, 0.18);
+    const armGroupL = new THREE.Group();
+    armGroupL.position.set(-0.62, 1.75, 0);
+    const armL = new THREE.Mesh(armGeo, bodyMat);
+    armL.position.y = -0.35;
+    armGroupL.add(armL);
+    root.add(armGroupL);
+
+    // 5. 右臂手持專屬應援棒
     const stickMat = this.getLightstickMaterial();
-    const armR = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.7, 0.18), bodyMat);
-    armR.position.set(0.65, 1.4, 0.2);
-    armR.rotation.x = -Math.PI / 6;
+    const armGroupR = new THREE.Group();
+    armGroupR.position.set(0.62, 1.75, 0);
+    const armR = new THREE.Mesh(armGeo, bodyMat);
+    armR.position.y = -0.35;
+    armGroupR.add(armR);
 
     const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 1.2, 8), stickMat);
-    stick.position.set(0, -0.7, 0.3);
+    stick.position.set(0, -0.65, 0.35);
     stick.rotation.x = Math.PI / 4;
-    armR.add(stick);
-    root.add(armR);
+    armGroupR.add(stick);
+    root.add(armGroupR);
+
+    root.userData = {
+      legL: legGroupL,
+      legR: legGroupR,
+      armL: armGroupL,
+      armR: armGroupR,
+      body: body
+    };
 
     return root;
   }
@@ -135,6 +165,9 @@ export class AvatarManager {
     this.playerMesh.position.set(0, HEX_HEIGHT + 1.2, 14);
     this.playerMesh.scale.set(1.8, 1.8, 1.8);
     this.avatarGroup.add(this.playerMesh);
+    if (window.reviewApp && window.reviewApp.playerController) {
+      window.reviewApp.playerController.playerMesh = this.playerMesh;
+    }
     this.saveConfig();
   }
 
@@ -174,12 +207,10 @@ export class AvatarManager {
     });
   }
 
-  // 主角舞台待機打歌舞步
+  // 主角待機呼吸 (僅在未移動時微幅呼吸，絕不覆蓋世界旋轉角)
   update(time) {
-    if (this.playerMesh) {
-      // 韻律節奏律動 (Idol Bounce)
-      this.playerMesh.position.y = HEX_HEIGHT + 1.2 + Math.abs(Math.sin(time * 4)) * 0.3;
-      this.playerMesh.rotation.y = Math.sin(time * 2) * 0.2;
+    if (this.playerMesh && (!window.reviewApp || !window.reviewApp.playerController || !window.reviewApp.playerController.isControlling)) {
+      this.playerMesh.position.y = HEX_HEIGHT + 1.2 + Math.abs(Math.sin(time * 3)) * 0.12;
     }
   }
 }

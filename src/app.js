@@ -187,6 +187,9 @@ export class App {
     if (topViewBtn) {
       topViewBtn.addEventListener('click', () => {
         this.audioSynth.playClick();
+        if (this.playerController && this.playerController.isControlling) {
+          this.playerController.togglePlayerControl(false);
+        }
         this.flyCameraTo(new THREE.Vector3(0, 240, 0), new THREE.Vector3(0, 0, 0));
       });
     }
@@ -305,21 +308,9 @@ export class App {
           this.audioSynth.playClick();
           this.showBuildingModal(targetObj.userData);
         } else if (targetObj.userData.type === 'hex_cell') {
-          // 若處於自由跑島模式，點擊地面主角前往該點
-          if (this.playerController && this.playerController.isControlling) {
+          // 點擊地面或橋樑：立即指揮主角前往該點並平滑切換追隨視角
+          if (this.playerController) {
             this.playerController.setMoveTarget(hitPoint);
-          } else {
-            // 點擊地塊基座：直接聚焦該島嶼的主力地標
-            const islandId = targetObj.userData.islandId;
-            const island = this.curriculum.islands.find(isl => isl.id === islandId);
-            if (island && island.buildings.length > 0) {
-              const b = island.buildings[0];
-              const mesh = this.world.buildingMeshes.get(b.id);
-              if (mesh && mesh.userData) {
-                this.audioSynth.playClick();
-                this.showBuildingModal(mesh.userData);
-              }
-            }
           }
         }
       }
@@ -340,6 +331,9 @@ export class App {
 
   focusIsland(islandId) {
     if (!this.world) return;
+    if (this.playerController && this.playerController.isControlling) {
+      this.playerController.togglePlayerControl(false);
+    }
     const banner = document.getElementById('quick-quiz-banner');
     const bannerTitle = document.getElementById('quick-quiz-title');
     const bannerBtn = document.getElementById('quick-quiz-start-btn');
@@ -655,6 +649,9 @@ export class App {
       }
     }
 
+    // 玩家角色物理移動與追隨相機更新 (需在 controls.update 之前計算增量)
+    if (this.playerController) this.playerController.update(delta, elapsedTime);
+
     this.controls.update();
     this.environment.update(elapsedTime, delta);
     this.resolutionCtrl.update(delta);
@@ -665,7 +662,6 @@ export class App {
     if (this.decor) this.decor.update(elapsedTime, isNight);
     if (this.people) this.people.update(delta, elapsedTime);
     if (this.avatar) this.avatar.update(elapsedTime);
-    if (this.playerController) this.playerController.update(delta, elapsedTime);
 
     this.renderer.render(this.scene, this.camera);
   }

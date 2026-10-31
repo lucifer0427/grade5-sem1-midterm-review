@@ -33,6 +33,9 @@ export class PlayerController {
     this.jumpVelocity = 0;
     this.gravity = -36.0;
 
+    // 肢體步態動畫週期
+    this.walkCycle = 0;
+
     // 特殊狀態 (加速 Buff / 跳舞中)
     this.speedBuffTimer = 0;
     this.dancingTimer = 0;
@@ -49,7 +52,42 @@ export class PlayerController {
     this.chests = [];
     this.initLuckyChests();
 
+    // 3. 地面點擊導航光環 (Target Marker)
+    this.initTargetMarker();
+
     this.setupInputListeners();
+  }
+
+  // 建立地面點擊導航光環 (Target Marker)
+  initTargetMarker() {
+    this.targetMarker = new THREE.Group();
+
+    // 金色旋轉光環
+    const ringGeo = new THREE.RingGeometry(0.8, 1.25, 32);
+    ringGeo.rotateX(-Math.PI / 2);
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0xf59e0b,
+      transparent: true,
+      opacity: 0.85,
+      side: THREE.DoubleSide
+    });
+    this.markerRing = new THREE.Mesh(ringGeo, ringMat);
+    this.targetMarker.add(this.markerRing);
+
+    // 白色中心圓點
+    const dotGeo = new THREE.CircleGeometry(0.35, 16);
+    dotGeo.rotateX(-Math.PI / 2);
+    const dotMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.95,
+      side: THREE.DoubleSide
+    });
+    this.targetMarker.add(new THREE.Mesh(dotGeo, dotMat));
+
+    this.targetMarker.position.set(0, -100, 0);
+    this.targetMarker.visible = false;
+    this.scene.add(this.targetMarker);
   }
 
   // 散落發光旋轉八面體星石 (Gems)
@@ -233,6 +271,7 @@ export class PlayerController {
 
   // 切換模式 (全景觀察 vs 玩家實體操縱)
   togglePlayerControl(enable) {
+    const wasControlling = this.isControlling;
     this.isControlling = enable !== undefined ? enable : !this.isControlling;
     const btn = document.getElementById('btn-toggle-ctrl');
     const toast = document.getElementById('ctrl-help-toast');
@@ -242,19 +281,41 @@ export class PlayerController {
       if (toast) {
         toast.style.display = 'block';
         toast.style.opacity = '1';
-        setTimeout(() => { if (toast) toast.style.opacity = '0'; }, 5000);
+        setTimeout(() => { if (toast) toast.style.opacity = '0'; }, 4000);
+      }
+      // 切換為操縱模式時，平滑運鏡至主角第三人稱舒適追隨視角
+      if (this.playerMesh && window.reviewApp) {
+        const pPos = this.playerMesh.position;
+        const currentOffset = new THREE.Vector3().subVectors(this.camera.position, this.controls.target);
+        let targetCamPos;
+        if (currentOffset.length() > 60 || Math.abs(currentOffset.y) > 40) {
+          // 若原先是全景鳥瞰，平滑過渡到角色斜後方 45 度視角
+          targetCamPos = new THREE.Vector3(pPos.x, pPos.y + 18, pPos.z + 28);
+        } else {
+          // 保持當前視角角度，平移聚焦至角色
+          targetCamPos = pPos.clone().add(currentOffset);
+        }
+        const targetLookAt = new THREE.Vector3(pPos.x, pPos.y + 2.5, pPos.z);
+        window.reviewApp.flyCameraTo(targetCamPos, targetLookAt, 0.65);
       }
     } else {
       if (btn) btn.classList.remove('active');
       if (toast) toast.style.display = 'none';
       this.targetMovePoint = null;
+      if (this.targetMarker) this.targetMarker.visible = false;
     }
   }
 
   // 點擊地面移動主角
   setMoveTarget(worldPos) {
     this.targetMovePoint = new THREE.Vector3(worldPos.x, HEX_HEIGHT + 1.2, worldPos.z);
-    this.togglePlayerControl(true);
+    if (this.targetMarker) {
+      this.targetMarker.position.set(worldPos.x, HEX_HEIGHT + 0.22, worldPos.z);
+      this.targetMarker.visible = true;
+    }
+    if (!this.isControlling) {
+      this.togglePlayerControl(true);
+    }
   }
 
   // 觸發靠近的建築
@@ -268,7 +329,13 @@ export class PlayerController {
 
   // 每幀更新：移動、跳躍物理、碰撞檢測與鏡頭平滑跟隨
   update(delta, time) {
-    if (!this.playerMesh) return;
+    if (!this.playerMesh) {
+      if (this.avatarManager && this.avatarManager.playerMesh) {
+        this.playerMesh = this.avatarManager.playerMesh;
+      } else {
+        return;
+      }
+    }
 
     // 0. 特殊 Buff 與舞步計時器
     if (this.speedBuffTimer > 0) {
@@ -307,6 +374,13 @@ export class PlayerController {
       }
     });
 
+    // 動態導航光環動畫 (旋轉與呼吸微擴散)
+    if (this.targetMarker && this.targetMarker.visible) {
+      this.markerRing.rotation.z += delta * 3.5;
+      const pulse = 1.0 + Math.sin(time * 8) * 0.12;
+      this.targetMarker.scale.set(pulse, pulse, pulse);
+    }
+
     // 3. 移動邏輯 (WASD / 點擊尋路)
     let moving = false;
     let moveDir = new THREE.Vector3();
@@ -316,12 +390,15 @@ export class PlayerController {
     if (this.keys.left) moveDir.x -= 1;
     if (this.keys.right) moveDir.x += 1;
 
+    let targetAngle = null;
+
     if (moveDir.lengthSq() > 0) {
       this.targetMovePoint = null;
+      if (this.targetMarker) this.targetMarker.visible = false;
       moveDir.normalize();
       moving = true;
 
-      // 依相機水平朝向計算前進方向
+      // 依相機水平朝向計算前進方向 (按 W 永遠是朝畫面正前方前進)
       const camForward = new THREE.Vector3();
       this.camera.getWorldDirection(camForward);
       camForward.y = 0;
@@ -334,30 +411,56 @@ export class PlayerController {
         .normalize();
 
       this.playerMesh.position.addScaledVector(moveVec, this.moveSpeed * delta);
-
-      if (this.dancingTimer <= 0) {
-        const targetAngle = Math.atan2(moveVec.x, moveVec.z);
-        this.playerMesh.rotation.y = THREE.MathUtils.lerp(this.playerMesh.rotation.y, targetAngle, 0.2);
-      }
+      targetAngle = Math.atan2(moveVec.x, moveVec.z);
     } else if (this.targetMovePoint) {
       const diff = new THREE.Vector3().subVectors(this.targetMovePoint, this.playerMesh.position);
       diff.y = 0;
       const dist = diff.length();
 
-      if (dist > 0.8) {
+      if (dist > 0.6) {
+        // 靠近目標時平滑減速，避免撞牆般驟停
+        const currentSpeed = dist < 3.0 ? Math.max(5, this.moveSpeed * (dist / 3.0)) : this.moveSpeed;
         diff.normalize();
-        this.playerMesh.position.addScaledVector(diff, this.moveSpeed * delta);
-        if (this.dancingTimer <= 0) {
-          const targetAngle = Math.atan2(diff.x, diff.z);
-          this.playerMesh.rotation.y = THREE.MathUtils.lerp(this.playerMesh.rotation.y, targetAngle, 0.2);
-        }
+        this.playerMesh.position.addScaledVector(diff, currentSpeed * delta);
+        targetAngle = Math.atan2(diff.x, diff.z);
         moving = true;
       } else {
         this.targetMovePoint = null;
+        if (this.targetMarker) this.targetMarker.visible = false;
       }
     }
 
-    // 4. 垂直跳躍物理
+    // 4. 最短弧平滑轉向 (徹底消除跨越 Pi 倒轉抽搐)
+    if (targetAngle !== null && this.dancingTimer <= 0) {
+      let diffAngle = (targetAngle - this.playerMesh.rotation.y) % (Math.PI * 2);
+      if (diffAngle < -Math.PI) diffAngle += Math.PI * 2;
+      if (diffAngle > Math.PI) diffAngle -= Math.PI * 2;
+      this.playerMesh.rotation.y += diffAngle * 0.28;
+    }
+
+    // 5. 肢體步態動畫 (雙腿與手臂前後交替擺動)
+    if (this.playerMesh.userData && this.playerMesh.userData.legL) {
+      const { legL, legR, armL, armR, body } = this.playerMesh.userData;
+      if (moving && !this.isJumping) {
+        this.walkCycle += delta * (this.moveSpeed > 20 ? 18 : 13);
+        const legAngle = Math.sin(this.walkCycle) * 0.65;
+        legL.rotation.x = legAngle;
+        legR.rotation.x = -legAngle;
+        if (armL) armL.rotation.x = -legAngle * 0.75;
+        if (armR) armR.rotation.x = legAngle * 0.45;
+        if (body) body.rotation.x = 0.08; // 跑步微傾角
+      } else {
+        // 站立平滑復位
+        this.walkCycle = 0;
+        legL.rotation.x = THREE.MathUtils.lerp(legL.rotation.x, 0, 0.2);
+        legR.rotation.x = THREE.MathUtils.lerp(legR.rotation.x, 0, 0.2);
+        if (armL) armL.rotation.x = THREE.MathUtils.lerp(armL.rotation.x, 0, 0.2);
+        if (armR) armR.rotation.x = THREE.MathUtils.lerp(armR.rotation.x, 0, 0.2);
+        if (body) body.rotation.x = THREE.MathUtils.lerp(body.rotation.x, 0, 0.2);
+      }
+    }
+
+    // 6. 垂直跳躍物理
     const groundY = HEX_HEIGHT + 1.2;
     if (this.isJumping) {
       this.jumpVelocity += this.gravity * delta;
@@ -369,28 +472,36 @@ export class PlayerController {
         this.jumpVelocity = 0;
       }
     } else {
-      // 地面行走擺動
       if (moving) {
-        this.playerMesh.position.y = groundY + Math.abs(Math.sin(time * (this.moveSpeed > 20 ? 18 : 12))) * 0.35;
+        // 跑步微幅彈跳 (避免過大晃動)
+        this.playerMesh.position.y = groundY + Math.abs(Math.sin(this.walkCycle)) * 0.12;
       } else if (this.dancingTimer <= 0) {
-        this.playerMesh.position.y = groundY + Math.abs(Math.sin(time * 3)) * 0.15;
+        this.playerMesh.position.y = groundY;
       }
     }
 
-    // 5. 靠近建築物偵測
+    // 7. 靠近建築物偵測
     this.checkNearbyBuildings();
 
-    // 6. 第三人稱視角追隨 (Follow Cam)
-    if (this.isControlling) {
+    // 8. 第三人稱相機平滑無縫追隨 (與 OrbitControls 完美相容)
+    if (this.isControlling && (!window.reviewApp || !window.reviewApp.cameraLerp)) {
       const pPos = this.playerMesh.position;
-      const idealCamPos = new THREE.Vector3(
-        pPos.x - Math.sin(this.playerMesh.rotation.y) * 26,
-        pPos.y + 18,
-        pPos.z - Math.cos(this.playerMesh.rotation.y) * 26
-      );
+      const targetLookAt = new THREE.Vector3(pPos.x, pPos.y + 2.5, pPos.z);
 
-      this.camera.position.lerp(idealCamPos, 0.08);
-      this.controls.target.lerp(new THREE.Vector3(pPos.x, pPos.y + 3, pPos.z), 0.1);
+      // 目標點平滑朝角色移動
+      const prevTarget = this.controls.target.clone();
+      this.controls.target.lerp(targetLookAt, 0.14);
+      const targetDelta = new THREE.Vector3().subVectors(this.controls.target, prevTarget);
+
+      // 相機與目標點同步平移，保留玩家自訂視角，完全杜絕旋轉死循環
+      this.camera.position.add(targetDelta);
+
+      // 若距離異常過遠（如超出邊界），平緩校正
+      const camDist = this.camera.position.distanceTo(targetLookAt);
+      if (camDist > 65) {
+        const resetCamPos = targetLookAt.clone().add(new THREE.Vector3(0, 18, 28));
+        this.camera.position.lerp(resetCamPos, 0.05);
+      }
     }
   }
 

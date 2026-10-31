@@ -136,7 +136,12 @@ export class WorldManager {
       bridgeMesh.rotation.y = -angle;
       bridgeMesh.castShadow = true;
       bridgeMesh.receiveShadow = true;
+      bridgeMesh.userData = {
+        type: 'hex_cell',
+        isBridge: true
+      };
       this.bridgesGroup.add(bridgeMesh);
+      this.interactiveObjects.push(bridgeMesh);
 
       // 橋墩
       const pierMesh = new THREE.Mesh(GeoPool.cylinder, Materials.whiteWall);
