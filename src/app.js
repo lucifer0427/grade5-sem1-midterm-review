@@ -1,18 +1,18 @@
 // app.js: 主程式控制器、渲染迴圈、Raycast 拾取與 UI 事件整合
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { Pool } from './kit.js';
-import { WorldManager } from './world.js';
-import { ModelBuilder } from './scene-models.js';
-import { EnvironmentManager } from './environment.js';
-import { ResolutionController } from './resolution.js';
-import { AudioSynth } from './audio-synth.js';
-import { QuizEngine } from './quiz-engine.js';
-import { DecorManager } from './decor.js';
-import { PeopleManager } from './people.js';
-import { AvatarManager } from './avatar.js';
-import { PlayerController } from './player-controller.js';
-import { CertificateGenerator } from './certificate.js';
+import { Pool } from './kit.js?v=20261031_03';
+import { WorldManager } from './world.js?v=20261031_03';
+import { ModelBuilder } from './scene-models.js?v=20261031_03';
+import { EnvironmentManager } from './environment.js?v=20261031_03';
+import { ResolutionController } from './resolution.js?v=20261031_03';
+import { AudioSynth } from './audio-synth.js?v=20261031_03';
+import { QuizEngine } from './quiz-engine.js?v=20261031_03';
+import { DecorManager } from './decor.js?v=20261031_03';
+import { PeopleManager } from './people.js?v=20261031_03';
+import { AvatarManager } from './avatar.js?v=20261031_03';
+import { PlayerController } from './player-controller.js?v=20261031_03';
+import { CertificateGenerator } from './certificate.js?v=20261031_03';
 
 export class App {
   constructor() {
