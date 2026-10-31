@@ -455,7 +455,7 @@ export class PlayerController {
         legL.rotation.x = legAngle;
         legR.rotation.x = -legAngle;
         if (armL) armL.rotation.x = -legAngle * 0.85; // 左臂自然對稱擺動
-        if (armR) armR.rotation.x = -0.25 + Math.sin(this.walkCycle) * 0.12; // 右臂揮舞應援棒
+        if (armR) armR.rotation.x = -0.15 + Math.sin(this.walkCycle) * 0.12; // 右臂揮舞應援棒
         if (body) {
           body.rotation.x = 0.08; // 自然跑步微前傾
           body.rotation.z = Math.sin(this.walkCycle) * 0.03; // 重心左右微晃動
@@ -466,7 +466,7 @@ export class PlayerController {
         legL.rotation.x = THREE.MathUtils.lerp(legL.rotation.x, 0, damp);
         legR.rotation.x = THREE.MathUtils.lerp(legR.rotation.x, 0, damp);
         if (armL) armL.rotation.x = THREE.MathUtils.lerp(armL.rotation.x, 0, damp);
-        if (armR) armR.rotation.x = THREE.MathUtils.lerp(armR.rotation.x, -Math.PI / 4, damp);
+        if (armR) armR.rotation.x = THREE.MathUtils.lerp(armR.rotation.x, 0, damp);
         if (body) {
           body.rotation.x = THREE.MathUtils.lerp(body.rotation.x, 0, damp);
           body.rotation.z = THREE.MathUtils.lerp(body.rotation.z, 0, damp);
