@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { execFileSync } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,7 +23,7 @@ const files = [
   'src/app.js'
 ];
 
-console.log('🔍 [QA Auditor] 正在執行靜態 JavaScript 語法檢查...');
+console.log('🔍 [QA Auditor] 正在執行靜態 JavaScript 語法檢查 (node --check)...');
 
 let passed = true;
 
@@ -35,6 +36,9 @@ for (const relPath of files) {
   }
   const content = fs.readFileSync(fullPath, 'utf8');
   try {
+    // 實體語法驗證 (Node.js AST 編譯解析)
+    execFileSync(process.execPath, ['--check', fullPath], { encoding: 'utf8' });
+
     // 檢查代碼是否包含常見危險語法（例如在 rAF 中 new THREE 物件）
     if (relPath === 'src/app.js') {
       const animateMatch = content.match(/animate\s*\(\)\s*\{([\s\S]*?)\}/);
@@ -47,6 +51,10 @@ for (const relPath of files) {
     console.error(`❌ ${relPath} 語法解析失敗:`, err.message);
     passed = false;
   }
+}
+
+if (!passed) {
+  process.exit(1);
 }
 
 if (passed) {

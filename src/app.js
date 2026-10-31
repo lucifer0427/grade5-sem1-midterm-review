@@ -102,7 +102,7 @@ export class App {
       console.log('[INIT] 5. 建立 AvatarManager...');
       this.avatar = new AvatarManager(this.scene, this.quizEngine);
 
-      // 玩家角色即時操縱控制器 (跑島/收集星石/近身互動)
+      // 玩家角色即時操縱控制器 (跑島/收集星石/近身互動/邊界碰撞約束)
       console.log('[INIT] 6. 建立 PlayerController...');
       this.playerController = new PlayerController(
         this.scene,
@@ -110,7 +110,8 @@ export class App {
         this.controls,
         this.avatar,
         this.audioSynth,
-        this.quizEngine
+        this.quizEngine,
+        this.world
       );
 
       console.log('[INIT] 7. 全部初始化完成，呼叫 hideLoading...');
@@ -443,7 +444,7 @@ export class App {
   // 渲染測驗問答 UI
   renderQuizModal(view) {
     const quizModal = document.getElementById('quiz-modal');
-    if (!quizModal) return;
+    if (!quizModal || !view) return;
 
     if (view.isFinished) {
       this.showQuizResult(view);
@@ -579,6 +580,10 @@ export class App {
     const modal = document.getElementById('result-modal');
     if (!modal) return;
 
+    // 關閉問答彈窗，避免底層按鈕殘留被重複點擊
+    const quizModal = document.getElementById('quiz-modal');
+    if (quizModal) quizModal.classList.add('hidden');
+
     modal.classList.remove('hidden');
     document.getElementById('result-score').textContent = `${summary.score} 分`;
     document.getElementById('result-stars').textContent = `已收集星星: ${summary.playerTotalStars} ⭐`;
@@ -664,6 +669,8 @@ export class App {
     if (this.avatar) this.avatar.update(elapsedTime);
 
     this.renderer.render(this.scene, this.camera);
+    window._lastDrawCalls = this.renderer.info.render.calls;
+    window._lastTriangles = this.renderer.info.render.triangles;
   }
 }
 

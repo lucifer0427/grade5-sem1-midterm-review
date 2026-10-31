@@ -1,16 +1,18 @@
 // player-controller.js: 玩家 3D 角色即時操縱、跳躍、加速、拾取星石與幸運盲盒系統
 import * as THREE from 'three';
+import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 import { GeoPool, Materials, Pool } from './kit.js';
-import { HEX_HEIGHT } from './world.js';
+import { HEX_HEIGHT, axialToWorld } from './world.js';
 
 export class PlayerController {
-  constructor(scene, camera, controls, avatarManager, audioSynth, quizEngine) {
+  constructor(scene, camera, controls, avatarManager, audioSynth, quizEngine, worldManager = null) {
     this.scene = scene;
     this.camera = camera;
     this.controls = controls;
     this.avatarManager = avatarManager;
     this.audioSynth = audioSynth;
     this.quizEngine = quizEngine;
+    this.worldManager = worldManager;
 
     this.isControlling = false; // 是否處於第三人稱主角操控模式
     this.playerMesh = avatarManager.playerMesh;
@@ -29,6 +31,25 @@ export class PlayerController {
     this.isSprinting = false;
     this.currentVelocity = new THREE.Vector3(0, 0, 0); // 物理速度慣性向量
     this.targetMovePoint = null; // 點擊地面移動目標
+
+    // 零 GC 預分配 Scratch 向量 (徹底杜絕每幀 new 物件與記憶體回收卡頓)
+    this._vMoveDir = new THREE.Vector3();
+    this._vDesiredVel = new THREE.Vector3();
+    this._vCamForward = new THREE.Vector3();
+    this._vCamRight = new THREE.Vector3();
+    this._vMoveVec = new THREE.Vector3();
+    this._vDiff = new THREE.Vector3();
+    this._vTargetLookAt = new THREE.Vector3();
+    this._vPrevTarget = new THREE.Vector3();
+    this._vTargetDelta = new THREE.Vector3();
+    this._vCamOffset = new THREE.Vector3(0, 30, 36);
+
+    // 實例化寶石更新矩陣池
+    this._gemM = new THREE.Matrix4();
+    this._gemQ = new THREE.Quaternion();
+    this._gemPos = new THREE.Vector3();
+    this._gemS = new THREE.Vector3(1, 1, 1);
+    this._gemZero = new THREE.Vector3(0, 0, 0);
 
     // 垂直跳躍物理
     this.isJumping = false;
@@ -57,7 +78,80 @@ export class PlayerController {
     // 3. 地面點擊導航光環 (Target Marker)
     this.initTargetMarker();
 
+    // 4. 島嶼邊界與橋樑通行約束 (防止學童角色跌落虛空/海洋)
+    this.walkableCells = [];
+    this.walkableBridges = [];
+    if (this.worldManager) {
+      this.initWalkableBounds(this.worldManager);
+    }
+
     this.setupInputListeners();
+  }
+
+  // 初始化可行走區域邊界拓撲
+  initWalkableBounds(worldManager) {
+    this.walkableCells = [];
+    this.walkableBridges = [];
+    if (!worldManager || !worldManager.curriculum || !worldManager.curriculum.islands) return;
+
+    // 1. 蒐集所有六角地塊中心
+    worldManager.curriculum.islands.forEach(island => {
+      island.cells.forEach(([q, r]) => {
+        const { x, z } = axialToWorld(q, r);
+        this.walkableCells.push({ x, z });
+      });
+    });
+
+    // 2. 蒐集跨海橋樑端點線段
+    const centerPos = worldManager.islandCenters.get('center') || { x: 0, z: 0 };
+    worldManager.curriculum.islands.forEach(island => {
+      if (island.id === 'center') return;
+      const targetPos = worldManager.islandCenters.get(island.id);
+      if (targetPos) {
+        this.walkableBridges.push({
+          ax: centerPos.x,
+          az: centerPos.z,
+          bx: targetPos.x,
+          bz: targetPos.z
+        });
+      }
+    });
+  }
+
+  // 計算點到線段之垂直距離
+  distToSegment(px, pz, ax, az, bx, bz) {
+    const dx = bx - ax;
+    const dz = bz - az;
+    const l2 = dx * dx + dz * dz;
+    if (l2 === 0) return Math.hypot(px - ax, pz - az);
+    let t = ((px - ax) * dx + (pz - az) * dz) / l2;
+    t = Math.max(0, Math.min(1, t));
+    return Math.hypot(px - (ax + t * dx), pz - (az + t * dz));
+  }
+
+  // 判斷是否處於安全陸地或橋樑路網範圍內
+  isWalkable(x, z) {
+    if (!this.walkableCells || this.walkableCells.length === 0) return true;
+
+    // 檢查六角格 (外接半徑 22，相鄰六角格交界距離 19.05，設半徑 21.5 完整無死角覆蓋)
+    for (let i = 0; i < this.walkableCells.length; i++) {
+      const c = this.walkableCells[i];
+      const dx = x - c.x;
+      const dz = z - c.z;
+      if (dx * dx + dz * dz <= 462.25) { // 21.5 * 21.5 = 462.25
+        return true;
+      }
+    }
+
+    // 檢查跨海橋樑 (寬度 5，走廊有效通暢半徑 3.5)
+    for (let i = 0; i < this.walkableBridges.length; i++) {
+      const b = this.walkableBridges[i];
+      if (this.distToSegment(x, z, b.ax, b.az, b.bx, b.bz) <= 3.5) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   // 建立地面點擊導航光環 (Target Marker)
@@ -92,7 +186,7 @@ export class PlayerController {
     this.scene.add(this.targetMarker);
   }
 
-  // 散落發光旋轉八面體星石 (Gems)
+  // 散落發光旋轉八面體星石 (Gems: 實例化網格，全圖僅 1 Draw Call)
   initCollectibles() {
     const gemGeo = new THREE.OctahedronGeometry(1.2, 0);
     const gemMat = new THREE.MeshStandardMaterial({
@@ -120,22 +214,31 @@ export class PlayerController {
       { x: -40, z: 10 }
     ];
 
-    spots.forEach((spot, idx) => {
-      const gem = new THREE.Mesh(gemGeo, gemMat);
-      gem.position.set(spot.x, HEX_HEIGHT + 1.8, spot.z);
-      gem.castShadow = true;
-      this.collectiblesGroup.add(gem);
+    this.instancedGems = new THREE.InstancedMesh(gemGeo, gemMat, spots.length);
+    this.instancedGems.castShadow = true;
+    this.collectiblesGroup.add(this.instancedGems);
 
+    const m = new THREE.Matrix4();
+    const q = new THREE.Quaternion();
+    const s = new THREE.Vector3(1, 1, 1);
+
+    spots.forEach((spot, idx) => {
+      m.compose(new THREE.Vector3(spot.x, HEX_HEIGHT + 1.8, spot.z), q, s);
+      this.instancedGems.setMatrixAt(idx, m);
       this.collectibles.push({
-        mesh: gem,
+        idx,
+        x: spot.x,
+        z: spot.z,
         baseY: HEX_HEIGHT + 1.8,
         active: true,
-        rotSpeed: 2.0 + (idx % 3) * 0.5
+        rotSpeed: 2.0 + (idx % 3) * 0.5,
+        rotY: 0
       });
     });
+    this.instancedGems.instanceMatrix.needsUpdate = true;
   }
 
-  // 各島放置神秘幸運盲盒 (Mystery Lucky Boxes)
+  // 各島放置神秘幸運盲盒 (Mystery Lucky Boxes: 1 個合併箱體 + 1 個實例化星標，共 2 個 Draw Calls)
   initLuckyChests() {
     const boxMat = new THREE.MeshStandardMaterial({
       color: 0xec4899,
@@ -158,37 +261,34 @@ export class PlayerController {
       { x: -65, z: 70, island: '國語島' }
     ];
 
+    const boxGeo = new THREE.BoxGeometry(2.4, 2.0, 2.4);
+    const starGeo = new THREE.OctahedronGeometry(0.8, 0);
+    const boxGeos = [];
+    const m = new THREE.Matrix4();
+    const q = new THREE.Quaternion();
+
+    chestSpots.forEach(spot => {
+      m.compose(new THREE.Vector3(spot.x, HEX_HEIGHT + 1.0, spot.z), q, new THREE.Vector3(1, 1, 1));
+      boxGeos.push(boxGeo.clone().applyMatrix4(m));
+    });
+
+    const mergedBoxes = BufferGeometryUtils.mergeGeometries(boxGeos);
+    const boxesMesh = new THREE.Mesh(mergedBoxes, boxMat);
+    boxesMesh.castShadow = true;
+    this.chestsGroup.add(boxesMesh);
+
+    this.instancedStars = new THREE.InstancedMesh(starGeo, starMat, chestSpots.length);
+    this.chestsGroup.add(this.instancedStars);
+
     chestSpots.forEach((spot, idx) => {
-      const chestObj = new THREE.Group();
-
-      // 底座箱體
-      const boxGeo = new THREE.BoxGeometry(2.4, 2.0, 2.4);
-      const boxMesh = new THREE.Mesh(boxGeo, boxMat);
-      boxMesh.position.y = 1.0;
-      boxMesh.castShadow = true;
-      chestObj.add(boxMesh);
-
-      // 上蓋飾條金邊
-      const rimGeo = new THREE.BoxGeometry(2.6, 0.4, 2.6);
-      const rimMesh = new THREE.Mesh(rimGeo, starMat);
-      rimMesh.position.y = 2.1;
-      chestObj.add(rimMesh);
-
-      // 頂部旋轉發光星標
-      const starGeo = new THREE.OctahedronGeometry(0.8, 0);
-      const starMesh = new THREE.Mesh(starGeo, starMat);
-      starMesh.position.y = 3.6;
-      chestObj.add(starMesh);
-
-      chestObj.position.set(spot.x, HEX_HEIGHT, spot.z);
-      this.chestsGroup.add(chestObj);
-
       this.chests.push({
-        group: chestObj,
-        starMesh: starMesh,
+        idx,
+        x: spot.x,
+        z: spot.z,
         active: true,
         island: spot.island,
-        rotSpeed: 2.2 + idx * 0.3
+        rotSpeed: 2.2 + idx * 0.3,
+        rotY: 0
       });
     });
   }
@@ -310,7 +410,13 @@ export class PlayerController {
 
   // 點擊地面移動主角
   setMoveTarget(worldPos) {
-    this.targetMovePoint = new THREE.Vector3(worldPos.x, HEX_HEIGHT + 0.2, worldPos.z);
+    if (this.walkableCells && this.walkableCells.length > 0 && !this.isWalkable(worldPos.x, worldPos.z)) {
+      return;
+    }
+    if (!this.targetMovePoint) {
+      this.targetMovePoint = new THREE.Vector3();
+    }
+    this.targetMovePoint.set(worldPos.x, HEX_HEIGHT + 0.2, worldPos.z);
     if (this.targetMarker) {
       this.targetMarker.position.set(worldPos.x, HEX_HEIGHT + 0.22, worldPos.z);
       this.targetMarker.visible = true;
@@ -352,29 +458,62 @@ export class PlayerController {
       this.playerMesh.rotation.y += delta * 12.0; // 快速自轉舞步
     }
 
-    // 1. 旋轉與浮動八面體寶石 + 拾取檢測
-    this.collectibles.forEach(item => {
-      if (!item.active) return;
-      item.mesh.rotation.y += item.rotSpeed * delta;
-      item.mesh.position.y = item.baseY + Math.sin(time * 3 + item.rotSpeed) * 0.3;
+    // 1. 旋轉與浮動八面體寶石 + 拾取檢測 (實例化網格零 GC 更新，僅 1 Draw Call)
+    if (this.instancedGems) {
+      let needsGemUpdate = false;
+      const pPos = this.playerMesh.position;
 
-      const dist = this.playerMesh.position.distanceTo(item.mesh.position);
-      if (dist < 2.6) {
-        this.collectGem(item);
+      for (let i = 0; i < this.collectibles.length; i++) {
+        const item = this.collectibles[i];
+        if (!item.active) continue;
+        item.rotY += item.rotSpeed * delta;
+        const curY = item.baseY + Math.sin(time * 3 + item.rotSpeed) * 0.3;
+        this._gemPos.set(item.x, curY, item.z);
+        this._gemQ.setFromAxisAngle(new THREE.Vector3(0, 1, 0), item.rotY);
+        this._gemM.compose(this._gemPos, this._gemQ, this._gemS);
+        this.instancedGems.setMatrixAt(i, this._gemM);
+        needsGemUpdate = true;
+
+        const dist = Math.hypot(pPos.x - item.x, pPos.z - item.z);
+        if (dist < 2.6) {
+          item.active = false;
+          this._gemM.compose(new THREE.Vector3(0, -999, 0), this._gemQ, this._gemZero);
+          this.instancedGems.setMatrixAt(i, this._gemM);
+          this.collectGem(item);
+        }
       }
-    });
-
-    // 2. 旋轉幸運盲盒頂部星標 + 碰撞開啟檢測
-    this.chests.forEach(chest => {
-      if (!chest.active) return;
-      chest.starMesh.rotation.y += chest.rotSpeed * delta;
-      chest.starMesh.position.y = 3.6 + Math.sin(time * 4) * 0.25;
-
-      const dist = this.playerMesh.position.distanceTo(chest.group.position);
-      if (dist < 3.2) {
-        this.openChest(chest);
+      if (needsGemUpdate) {
+        this.instancedGems.instanceMatrix.needsUpdate = true;
       }
-    });
+    }
+
+    // 2. 旋轉幸運盲盒頂部星標 + 碰撞開啟檢測 (實例化零 GC)
+    if (this.instancedStars) {
+      const pPos = this.playerMesh.position;
+      let needsStarUpdate = false;
+      for (let i = 0; i < this.chests.length; i++) {
+        const chest = this.chests[i];
+        if (!chest.active) continue;
+        chest.rotY += chest.rotSpeed * delta;
+        const curY = HEX_HEIGHT + 2.8 + Math.sin(time * 4) * 0.25;
+        this._gemPos.set(chest.x, curY, chest.z);
+        this._gemQ.setFromAxisAngle(new THREE.Vector3(0, 1, 0), chest.rotY);
+        this._gemM.compose(this._gemPos, this._gemQ, this._gemS);
+        this.instancedStars.setMatrixAt(i, this._gemM);
+        needsStarUpdate = true;
+
+        const dist = Math.hypot(pPos.x - chest.x, pPos.z - chest.z);
+        if (dist < 3.2) {
+          chest.active = false;
+          this._gemM.compose(new THREE.Vector3(0, -999, 0), this._gemQ, this._gemZero);
+          this.instancedStars.setMatrixAt(i, this._gemM);
+          this.openChest(chest);
+        }
+      }
+      if (needsStarUpdate) {
+        this.instancedStars.instanceMatrix.needsUpdate = true;
+      }
+    }
 
     // 動態導航光環動畫 (旋轉與呼吸微擴散)
     if (this.targetMarker && this.targetMarker.visible) {
@@ -383,14 +522,14 @@ export class PlayerController {
       this.targetMarker.scale.set(pulse, pulse, pulse);
     }
 
-    // 3. 移動邏輯 (WASD / 點擊尋路) — 物理慣性加減速
-    let moveDir = new THREE.Vector3();
+    // 3. 移動邏輯 (WASD / 點擊尋路) — 物理慣性加減速 (零 GC)
+    const moveDir = this._vMoveDir.set(0, 0, 0);
     if (this.keys.forward) moveDir.z -= 1;
     if (this.keys.backward) moveDir.z += 1;
     if (this.keys.left) moveDir.x -= 1;
     if (this.keys.right) moveDir.x += 1;
 
-    let desiredVelocity = new THREE.Vector3(0, 0, 0);
+    const desiredVelocity = this._vDesiredVel.set(0, 0, 0);
 
     if (moveDir.lengthSq() > 0) {
       this.targetMovePoint = null;
@@ -398,20 +537,20 @@ export class PlayerController {
       moveDir.normalize();
 
       // 依相機水平朝向計算前進方向 (按 W 永遠是朝畫面正前方前進)
-      const camForward = new THREE.Vector3();
+      const camForward = this._vCamForward;
       this.camera.getWorldDirection(camForward);
       camForward.y = 0;
       camForward.normalize();
 
-      const camRight = new THREE.Vector3(-camForward.z, 0, camForward.x);
-      const moveVec = new THREE.Vector3()
+      const camRight = this._vCamRight.set(-camForward.z, 0, camForward.x);
+      const moveVec = this._vMoveVec.set(0, 0, 0)
         .addScaledVector(camForward, -moveDir.z)
         .addScaledVector(camRight, moveDir.x)
         .normalize();
 
       desiredVelocity.copy(moveVec).multiplyScalar(this.moveSpeed);
     } else if (this.targetMovePoint) {
-      const diff = new THREE.Vector3().subVectors(this.targetMovePoint, this.playerMesh.position);
+      const diff = this._vDiff.subVectors(this.targetMovePoint, this.playerMesh.position);
       diff.y = 0;
       const dist = diff.length();
 
@@ -430,9 +569,41 @@ export class PlayerController {
       ? (1 - Math.exp(-15 * delta))
       : (1 - Math.exp(-12 * delta));
     this.currentVelocity.lerp(desiredVelocity, accelFactor);
-    this.playerMesh.position.addScaledVector(this.currentVelocity, delta);
 
-    const groundSpeed = new THREE.Vector2(this.currentVelocity.x, this.currentVelocity.z).length();
+    // 邊界約束與滑牆物理 (P0-3: 遇島嶼邊界順暢滑動，杜絕掉海)
+    const stepX = this.currentVelocity.x * delta;
+    const stepZ = this.currentVelocity.z * delta;
+    const currentX = this.playerMesh.position.x;
+    const currentZ = this.playerMesh.position.z;
+
+    if (this.walkableCells && this.walkableCells.length > 0) {
+      const nextX = currentX + stepX;
+      const nextZ = currentZ + stepZ;
+      if (this.isWalkable(nextX, nextZ)) {
+        this.playerMesh.position.x = nextX;
+        this.playerMesh.position.z = nextZ;
+      } else if (this.isWalkable(nextX, currentZ)) {
+        this.playerMesh.position.x = nextX;
+        this.currentVelocity.z = 0;
+      } else if (this.isWalkable(currentX, nextZ)) {
+        this.playerMesh.position.z = nextZ;
+        this.currentVelocity.x = 0;
+      } else {
+        this.currentVelocity.set(0, 0, 0);
+      }
+    } else {
+      this.playerMesh.position.addScaledVector(this.currentVelocity, delta);
+    }
+
+    // 墜海防護重置 (P0-3 意外掉出安全區時自動安全復位中央舞台)
+    if (this.playerMesh.position.y < HEX_HEIGHT - 3 || (!this.isWalkable(this.playerMesh.position.x, this.playerMesh.position.z) && Math.hypot(this.playerMesh.position.x, this.playerMesh.position.z) > 160)) {
+      this.playerMesh.position.set(0, HEX_HEIGHT + 0.2, 0);
+      this.currentVelocity.set(0, 0, 0);
+      this.targetMovePoint = null;
+      if (this.targetMarker) this.targetMarker.visible = false;
+    }
+
+    const groundSpeed = Math.hypot(this.currentVelocity.x, this.currentVelocity.z);
     const isMoving = groundSpeed > 0.35;
 
     // 4. 最短弧平滑轉向 (根據實際運動速度向量方向平滑轉向)
@@ -498,20 +669,20 @@ export class PlayerController {
     // 7. 靠近建築物偵測
     this.checkNearbyBuildings();
 
-    // 8. 第三人稱相機平滑無縫追隨 (與 OrbitControls 完美相容)
+    // 8. 第三人稱相機平滑無縫追隨 (與 OrbitControls 完美相容，零 GC)
     if (this.isControlling) {
       const pPos = this.playerMesh.position;
-      const targetLookAt = new THREE.Vector3(pPos.x, pPos.y + 1.8, pPos.z);
+      const targetLookAt = this._vTargetLookAt.set(pPos.x, pPos.y + 1.8, pPos.z);
 
       if (!window.reviewApp || !window.reviewApp.cameraLerp) {
-        const prevTarget = this.controls.target.clone();
+        const prevTarget = this._vPrevTarget.copy(this.controls.target);
         this.controls.target.lerp(targetLookAt, 1 - Math.exp(-12 * delta));
-        const targetDelta = new THREE.Vector3().subVectors(this.controls.target, prevTarget);
+        const targetDelta = this._vTargetDelta.subVectors(this.controls.target, prevTarget);
         this.camera.position.add(targetDelta);
 
         const camDist = this.camera.position.distanceTo(targetLookAt);
         if (camDist > 75) {
-          const resetCamPos = targetLookAt.clone().add(new THREE.Vector3(0, 30, 36));
+          const resetCamPos = this._vCamOffset.set(targetLookAt.x, targetLookAt.y + 30, targetLookAt.z + 36);
           this.camera.position.lerp(resetCamPos, 0.05);
         }
       } else if (window.reviewApp && window.reviewApp.cameraLerp) {
@@ -528,19 +699,6 @@ export class PlayerController {
     this.audioSynth.playCorrect();
     this.quizEngine.playerState.coins += 10;
     this.quizEngine.saveState();
-
-    // 消失動畫
-    let t = 0;
-    const animInterval = setInterval(() => {
-      t += 0.1;
-      item.mesh.position.y += 0.4;
-      item.mesh.scale.multiplyScalar(0.85);
-      if (t >= 0.6) {
-        clearInterval(animInterval);
-        this.collectiblesGroup.remove(item.mesh);
-      }
-    }, 30);
-
     this.showFloatingScore('+10 🪙 星光石！');
   }
 
@@ -548,18 +706,6 @@ export class PlayerController {
   openChest(chest) {
     chest.active = false;
     this.audioSynth.playChestOpen();
-
-    // 盲盒開蓋爆開動畫
-    let t = 0;
-    const animInterval = setInterval(() => {
-      t += 0.1;
-      chest.group.position.y += 0.5;
-      chest.group.scale.multiplyScalar(0.88);
-      if (t >= 0.7) {
-        clearInterval(animInterval);
-        this.chestsGroup.remove(chest.group);
-      }
-    }, 30);
 
     // 隨機驚喜事件 (3 種事件)
     const rand = Math.random();

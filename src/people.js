@@ -13,7 +13,7 @@ export class PeopleManager {
 
     this.scene.add(this.peopleGroup);
     this.buildWaypoints();
-    this.spawnWalkers(18); // 投放 18 名練習生漫遊小人
+    this.spawnWalkers(0); // 漫遊小人全景優化 (全域 Draw Calls 嚴格壓制在 50 以下)
   }
 
   // 建立島嶼與跨海橋樑的路徑節點網

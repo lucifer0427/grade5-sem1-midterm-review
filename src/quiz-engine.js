@@ -23,23 +23,27 @@ export class QuizEngine {
   }
 
   loadState() {
-    try {
-      const saved = localStorage.getItem('grade5_exam_review_state');
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch (e) {
-      console.warn('無法讀取 localStorage 進度', e);
-    }
-
-    return {
+    const defaultState = {
       coins: 100, // 初始星光幣
       stars: 0,
       clearedBuildings: [],
       wrongQuestionIds: [],
       avatarOutfit: 'school_uniform',
-      lightstick: 'basic_pink'
+      lightstick: 'basic_pink',
+      schemaVersion: 2
     };
+
+    try {
+      const saved = localStorage.getItem('grade5_exam_review_state');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return Object.assign(defaultState, parsed);
+      }
+    } catch (e) {
+      console.warn('無法讀取 localStorage 進度', e);
+    }
+
+    return defaultState;
   }
 
   saveState() {
@@ -99,10 +103,31 @@ export class QuizEngine {
     return this.getCurrentQuestionView();
   }
 
-  // 開始期中總大會考 (跨科隨機 15 題組卷)
+  // 開始期中總大會考 (各科嚴格平均抽 3 題，跨科 15 題組卷)
   startGrandExam() {
-    const shuffled = [...this.allQuestions].sort(() => 0.5 - Math.random());
-    const selected = shuffled.slice(0, 15);
+    const subjects = ['math', 'english', 'science', 'social', 'chinese'];
+    const selected = [];
+
+    // 每科嚴格抽取 3 題 (5 科 × 3 = 15 題均衡抽配)
+    subjects.forEach(sub => {
+      const subQuestions = this.allQuestions.filter(q => q.subject === sub);
+      const shuffled = [...subQuestions].sort(() => 0.5 - Math.random());
+      selected.push(...shuffled.slice(0, 3));
+    });
+
+    // 跨科題目打散隨機交錯
+    selected.sort(() => 0.5 - Math.random());
+
+    const breakdown = {
+      math: { total: 0, correct: 0 },
+      english: { total: 0, correct: 0 },
+      science: { total: 0, correct: 0 },
+      social: { total: 0, correct: 0 },
+      chinese: { total: 0, correct: 0 }
+    };
+    selected.forEach(q => {
+      if (breakdown[q.subject]) breakdown[q.subject].total++;
+    });
 
     this.currentSession = {
       mode: 'grand_exam',
@@ -113,14 +138,9 @@ export class QuizEngine {
       combo: 0,
       attempts: 0,
       eliminatedIndices: new Set(),
+      solvedQuestionIds: new Set(),
       tierLevel: 0,
-      subjectBreakdown: {
-        math: { total: 0, correct: 0 },
-        english: { total: 0, correct: 0 },
-        science: { total: 0, correct: 0 },
-        social: { total: 0, correct: 0 },
-        chinese: { total: 0, correct: 0 }
-      }
+      subjectBreakdown: breakdown
     };
 
     return this.getCurrentQuestionView();
@@ -190,9 +210,12 @@ export class QuizEngine {
       this.playerState.stars += earnedStars;
       this.saveState();
 
-      if (session.mode === 'grand_exam' && session.subjectBreakdown[q.subject]) {
-        session.subjectBreakdown[q.subject].correct++;
-        session.subjectBreakdown[q.subject].total++;
+      // 大會考成績統計 (防重複計數：每題只在首次解答成功時計入 correct)
+      if (session.mode === 'grand_exam' && session.subjectBreakdown && session.subjectBreakdown[q.subject]) {
+        if (!session.solvedQuestionIds.has(q.id)) {
+          session.solvedQuestionIds.add(q.id);
+          session.subjectBreakdown[q.subject].correct++;
+        }
       }
 
       const result = {
@@ -215,12 +238,8 @@ export class QuizEngine {
       this.saveState();
     }
 
-    if (session.mode === 'grand_exam' && session.subjectBreakdown[q.subject]) {
-      session.subjectBreakdown[q.subject].total++;
-    }
-
     if (session.attempts === 1) {
-      // 第一次答錯：進入 Tier 1 (題眼提示 + 50/50 排除 1 個干擾項)
+      // 第一次答錯：進入 Tier 1 (題眼提示 + 50/50 排除 2 個干擾項)
       session.tierLevel = 1;
       this.eliminateDistractor(q);
       return {
@@ -244,17 +263,19 @@ export class QuizEngine {
     }
   }
 
-  // 50/50 排除一個錯誤選項
+  // 50/50 排除干擾項 (4選1排除2個錯誤項，留下1正1誤)
   eliminateDistractor(q) {
     const wrongOptions = [];
     q.options.forEach((opt, idx) => {
-      if (idx !== q.answer) wrongOptions.push(idx);
+      if (idx !== q.answer && !this.currentSession.eliminatedIndices.has(idx)) {
+        wrongOptions.push(idx);
+      }
     });
 
-    if (wrongOptions.length > 0) {
-      // 隨機排除 1 個
-      const pick = wrongOptions[Math.floor(Math.random() * wrongOptions.length)];
-      this.currentSession.eliminatedIndices.add(pick);
+    const shuffledWrongs = wrongOptions.sort(() => 0.5 - Math.random());
+    const countToEliminate = Math.min(2, shuffledWrongs.length);
+    for (let i = 0; i < countToEliminate; i++) {
+      this.currentSession.eliminatedIndices.add(shuffledWrongs[i]);
     }
   }
 

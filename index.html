@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>國小五年級期中考 3D 複習島 (Exam Review Island)</title>
   <link rel="stylesheet" href="css/ui.css">
   <link rel="stylesheet" href="css/quiz.css">
@@ -26,12 +26,12 @@
     });
   </script>
   
-  <!-- Import Map: 原生 ESM 載入 Three.js，零打包工具依賴 -->
+  <!-- Import Map: 原生 ESM 載入 Three.js，零打包工具依賴 (本地 vendor 離線優先，相容 GitHub Pages) -->
   <script type="importmap">
     {
       "imports": {
-        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        "three": "./vendor/three.module.js",
+        "three/addons/": "./vendor/addons/"
       }
     }
   </script>

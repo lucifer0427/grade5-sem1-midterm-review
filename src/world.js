@@ -1,5 +1,6 @@
 // world.js: 六角軸向座標系 (Axial (q,r))、島嶼生成與路徑拓撲
 import * as THREE from 'three';
+import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 import { Pool, GeoPool, Materials, SQ3 } from './kit.js';
 
 export const HEX_RADIUS = 22; // 六角外接圓半徑
@@ -26,7 +27,7 @@ export class WorldManager {
     this.bridgesGroup = new THREE.Group();
     this.beaconsGroup = new THREE.Group();
     this.badgesGroup = new THREE.Group();
-    this.foamRings = []; // 水面白色浪花圈
+    this.foamMesh = null; // 合併水面泡沫浪花網格
     
     this.interactiveObjects = []; // 提供 Raycaster 拾取
     this.buildingMeshes = new Map(); // id -> Mesh
@@ -45,9 +46,17 @@ export class WorldManager {
   }
 
   buildIslands() {
+    const baseGeos = [];
+    const grassGeos = [];
+    const centerGeos = [];
+    const rimGeos = [];
+    const foamGeos = [];
+
+    const rotQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 6);
+    const m = new THREE.Matrix4();
+
     this.curriculum.islands.forEach(island => {
       const isCenter = island.id === 'center';
-      const cellMaterial = isCenter ? Materials.center : Materials.grass;
 
       // 計算島嶼中心座標 (平均值)
       let sumX = 0, sumZ = 0;
@@ -60,61 +69,93 @@ export class WorldManager {
 
         // 1. 六角底層岩石基座 (深色岩壁)
         const baseH = HEX_HEIGHT * 0.7;
-        const baseMesh = new THREE.Mesh(GeoPool.hexCylinder, Materials.darkRock);
-        baseMesh.scale.set(HEX_RADIUS * 0.99, baseH, HEX_RADIUS * 0.99);
-        baseMesh.position.set(x, baseH / 2, z);
-        baseMesh.rotation.y = Math.PI / 6;
-        baseMesh.receiveShadow = true;
-        this.islandGroup.add(baseMesh);
+        m.compose(
+          new THREE.Vector3(x, baseH / 2, z),
+          rotQuat,
+          new THREE.Vector3(HEX_RADIUS * 0.99, baseH, HEX_RADIUS * 0.99)
+        );
+        baseGeos.push(GeoPool.hexCylinder.clone().applyMatrix4(m));
 
-        // 2. 六角頂層地表柱體 (鮮明草皮/舞台粉)
+        // 2. 六角頂層地表柱體 (草皮 / 舞台)
         const topH = HEX_HEIGHT * 0.35;
-        const hexMesh = new THREE.Mesh(GeoPool.hexCylinder, cellMaterial);
-        hexMesh.scale.set(HEX_RADIUS * 0.96, topH, HEX_RADIUS * 0.96);
-        hexMesh.position.set(x, HEX_HEIGHT - topH / 2, z);
-        hexMesh.rotation.y = Math.PI / 6;
-        hexMesh.castShadow = true;
-        hexMesh.receiveShadow = true;
-
-        hexMesh.userData = {
-          type: 'hex_cell',
-          islandId: island.id,
-          axial: [q, r]
-        };
-
-        this.islandGroup.add(hexMesh);
-        this.interactiveObjects.push(hexMesh);
+        m.compose(
+          new THREE.Vector3(x, HEX_HEIGHT - topH / 2, z),
+          rotQuat,
+          new THREE.Vector3(HEX_RADIUS * 0.96, topH, HEX_RADIUS * 0.96)
+        );
+        const topGeo = GeoPool.hexCylinder.clone().applyMatrix4(m);
+        if (isCenter) centerGeos.push(topGeo);
+        else grassGeos.push(topGeo);
 
         // 3. 地塊邊框頂部飾邊 (暖白/沙灘金色細圈)
-        const topRim = new THREE.Mesh(GeoPool.hexCylinder, Materials.sandRim);
-        topRim.scale.set(HEX_RADIUS * 0.93, 0.35, HEX_RADIUS * 0.93);
-        topRim.position.set(x, HEX_HEIGHT + 0.18, z);
-        topRim.rotation.y = Math.PI / 6;
-        this.islandGroup.add(topRim);
+        m.compose(
+          new THREE.Vector3(x, HEX_HEIGHT + 0.18, z),
+          rotQuat,
+          new THREE.Vector3(HEX_RADIUS * 0.93, 0.35, HEX_RADIUS * 0.93)
+        );
+        rimGeos.push(GeoPool.hexCylinder.clone().applyMatrix4(m));
 
-        // 4. 水面白色泡沫浪花圈 (Shore Foam Ring: 微縮模型玩具箱質感關鍵)
-        const foamMesh = new THREE.Mesh(GeoPool.hexCylinder, Materials.foam);
-        foamMesh.scale.set(HEX_RADIUS * 1.05, 0.15, HEX_RADIUS * 1.05);
-        foamMesh.position.set(x, 1.05, z);
-        foamMesh.rotation.y = Math.PI / 6;
-        this.islandGroup.add(foamMesh);
-        this.foamRings.push({ mesh: foamMesh, baseX: HEX_RADIUS * 1.05, baseZ: HEX_RADIUS * 1.05, offset: (q * 3 + r * 5) % 10 });
+        // 4. 水面白色泡沫浪花圈 (Shore Foam Ring)
+        m.compose(
+          new THREE.Vector3(x, 1.05, z),
+          rotQuat,
+          new THREE.Vector3(HEX_RADIUS * 1.05, 0.15, HEX_RADIUS * 1.05)
+        );
+        foamGeos.push(GeoPool.hexCylinder.clone().applyMatrix4(m));
       });
 
       const centerX = sumX / count;
       const centerZ = sumZ / count;
       this.islandCenters.set(island.id, { x: centerX, z: centerZ });
     });
+
+    // 依材質合併幾何體 (P0-2: 大幅降低 Draw Calls)
+    if (baseGeos.length > 0) {
+      const mergedBase = BufferGeometryUtils.mergeGeometries(baseGeos);
+      const baseMesh = new THREE.Mesh(mergedBase, Materials.darkRock);
+      baseMesh.receiveShadow = true;
+      this.islandGroup.add(baseMesh);
+    }
+    if (grassGeos.length > 0) {
+      const mergedGrass = BufferGeometryUtils.mergeGeometries(grassGeos);
+      const grassMesh = new THREE.Mesh(mergedGrass, Materials.grass);
+      grassMesh.castShadow = true;
+      grassMesh.receiveShadow = true;
+      grassMesh.userData = { type: 'hex_cell' };
+      this.islandGroup.add(grassMesh);
+      this.interactiveObjects.push(grassMesh);
+    }
+    if (centerGeos.length > 0) {
+      const mergedCenter = BufferGeometryUtils.mergeGeometries(centerGeos);
+      const centerMesh = new THREE.Mesh(mergedCenter, Materials.center);
+      centerMesh.castShadow = true;
+      centerMesh.receiveShadow = true;
+      centerMesh.userData = { type: 'hex_cell' };
+      this.islandGroup.add(centerMesh);
+      this.interactiveObjects.push(centerMesh);
+    }
+    if (rimGeos.length > 0) {
+      const mergedRim = BufferGeometryUtils.mergeGeometries(rimGeos);
+      const rimMesh = new THREE.Mesh(mergedRim, Materials.sandRim);
+      this.islandGroup.add(rimMesh);
+    }
+    if (foamGeos.length > 0) {
+      const mergedFoam = BufferGeometryUtils.mergeGeometries(foamGeos);
+      this.foamMesh = new THREE.Mesh(mergedFoam, Materials.foam);
+      this.islandGroup.add(this.foamMesh);
+    }
   }
 
-  // 自動在島嶼邊緣間生成跨海橋樑
+  // 自動在島嶼邊緣間生成跨海橋樑 (合併靜態網格)
   buildBridges() {
     const islands = this.curriculum.islands;
-    const bridgeMaterial = Materials.bridge;
-
-    // 連接中央舞台與周邊 5 大島嶼
     const centerPos = this.islandCenters.get('center');
     if (!centerPos) return;
+
+    const bridgeGeos = [];
+    const pierGeos = [];
+    const m = new THREE.Matrix4();
+    const noRot = new THREE.Quaternion();
 
     islands.forEach(island => {
       if (island.id === 'center') return;
@@ -127,33 +168,51 @@ export class WorldManager {
       const dz = targetPos.z - centerPos.z;
       const dist = Math.sqrt(dx * dx + dz * dz);
       const angle = Math.atan2(dz, dx);
-
-      // 橋樑本體 (Box)
       const bridgeLen = Math.max(10, dist - HEX_RADIUS * 3.2);
-      const bridgeMesh = new THREE.Mesh(GeoPool.box, bridgeMaterial);
-      bridgeMesh.scale.set(bridgeLen, 1.2, 5);
-      bridgeMesh.position.set(midX, HEX_HEIGHT - 0.5, midZ);
-      bridgeMesh.rotation.y = -angle;
+
+      // 橋樑本體幾何
+      const bridgeQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -angle);
+      m.compose(
+        new THREE.Vector3(midX, HEX_HEIGHT - 0.5, midZ),
+        bridgeQuat,
+        new THREE.Vector3(bridgeLen, 1.2, 5)
+      );
+      bridgeGeos.push(GeoPool.box.clone().applyMatrix4(m));
+
+      // 橋墩幾何
+      m.compose(
+        new THREE.Vector3(midX, HEX_HEIGHT / 2 - 0.5, midZ),
+        noRot,
+        new THREE.Vector3(2, HEX_HEIGHT, 2)
+      );
+      pierGeos.push(GeoPool.cylinder.clone().applyMatrix4(m));
+    });
+
+    if (bridgeGeos.length > 0) {
+      const mergedBridge = BufferGeometryUtils.mergeGeometries(bridgeGeos);
+      const bridgeMesh = new THREE.Mesh(mergedBridge, Materials.bridge);
       bridgeMesh.castShadow = true;
       bridgeMesh.receiveShadow = true;
-      bridgeMesh.userData = {
-        type: 'hex_cell',
-        isBridge: true
-      };
+      bridgeMesh.userData = { type: 'hex_cell', isBridge: true };
       this.bridgesGroup.add(bridgeMesh);
       this.interactiveObjects.push(bridgeMesh);
-
-      // 橋墩
-      const pierMesh = new THREE.Mesh(GeoPool.cylinder, Materials.whiteWall);
-      pierMesh.scale.set(2, HEX_HEIGHT, 2);
-      pierMesh.position.set(midX, HEX_HEIGHT / 2 - 0.5, midZ);
+    }
+    if (pierGeos.length > 0) {
+      const mergedPier = BufferGeometryUtils.mergeGeometries(pierGeos);
+      const pierMesh = new THREE.Mesh(mergedPier, Materials.whiteWall);
       this.bridgesGroup.add(pierMesh);
-    });
+    }
   }
 
-  // 註冊可被 Raycast 拾取的建築物
-  registerBuilding(mesh, buildingData, islandData) {
-    mesh.userData = {
+  // 註冊可被 Raycast 拾取的建築物碰撞體 (不加入 Scene 杜絕額外 Draw Calls)
+  registerBuildingHitbox(buildingData, islandData, x, z) {
+    const hitboxGeo = new THREE.CylinderGeometry(9, 9, 24, 8);
+    const hitboxMat = new THREE.MeshBasicMaterial();
+    const hitbox = new THREE.Mesh(hitboxGeo, hitboxMat);
+    hitbox.position.set(x, HEX_HEIGHT + 10, z);
+    hitbox.updateMatrixWorld(true);
+
+    hitbox.userData = {
       type: 'building',
       buildingId: buildingData.id,
       islandId: islandData.id,
@@ -164,19 +223,20 @@ export class WorldManager {
       quizCount: buildingData.quizCount || 5
     };
 
-    // 建立加大版點擊碰撞體 (Hitbox: 半徑 9、高 24)，確保滑鼠或平板點擊 100% 觸發
-    const hitboxGeo = new THREE.CylinderGeometry(9, 9, 24, 8);
-    const hitboxMat = new THREE.MeshBasicMaterial({ visible: false });
-    const hitbox = new THREE.Mesh(hitboxGeo, hitboxMat);
-    hitbox.position.y = 10;
-    mesh.add(hitbox);
+    this.interactiveObjects.push(hitbox);
+    this.buildingMeshes.set(buildingData.id, hitbox);
 
-    this.interactiveObjects.push(mesh);
-    this.buildingMeshes.set(buildingData.id, mesh);
+    // 建立主島核心地標頂部懸浮指示看板 (避免過多 Billboard 造成 Draw Calls 超標)
+    const primaryLandmarks = ['center-stage', 'math-linegraph'];
+    if (primaryLandmarks.includes(buildingData.id)) {
+      this.createFloatingBadge(buildingData, islandData, hitbox);
+    }
+  }
+
+  // 向後相容 registerBuilding
+  registerBuilding(mesh, buildingData, islandData) {
+    this.registerBuildingHitbox(buildingData, islandData, mesh.position.x, mesh.position.z);
     this.buildingsGroup.add(mesh);
-
-    // 建立 3D 頂部懸浮指示看板 (Billboard Badge)
-    this.createFloatingBadge(buildingData, islandData, mesh);
   }
 
   // 繪製政策島風格懸浮指示卡 (Canvas Texture Billboard)
@@ -237,12 +297,11 @@ export class WorldManager {
 
   // 每幀水面浪花呼吸與動態更新
   update(delta, time) {
-    // 1. 水面泡沫圈自然呼吸
-    this.foamRings.forEach(item => {
-      const scaleFactor = 1.0 + Math.sin(time * 2.5 + item.offset) * 0.04;
-      item.mesh.scale.x = item.baseX * scaleFactor;
-      item.mesh.scale.z = item.baseZ * scaleFactor;
-    });
+    // 1. 水面泡沫圈自然呼吸 (單一網格等比微幅呼吸，零 GC 與極致效能)
+    if (this.foamMesh) {
+      const scaleFactor = 1.0 + Math.sin(time * 2.5) * 0.025;
+      this.foamMesh.scale.set(scaleFactor, 1, scaleFactor);
+    }
   }
 
   // 點亮建築永恆光柱 (通關獎勵)

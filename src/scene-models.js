@@ -1,5 +1,6 @@
 // scene-models.js: 五大學科地標建築 Procedural 程序化建模管線
 import * as THREE from 'three';
+import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 import { GeoPool, Materials, Pool } from './kit.js';
 import { axialToWorld, HEX_HEIGHT } from './world.js';
 
@@ -8,114 +9,87 @@ export class ModelBuilder {
     this.worldManager = worldManager;
   }
 
-  buildAllBuildings() {
-    const islands = this.worldManager.curriculum.islands;
-    islands.forEach(island => {
-      this.buildIslandBuildings(island);
-    });
+  createBuildingById(id, islandId) {
+    switch (id) {
+      // --- 中央島 ---
+      case 'center-stage': return this.createCenterStage();
+      case 'center-wardrobe': return this.createWardrobe();
+
+      // --- 數學島 ---
+      case 'math-linegraph': return this.createLineGraphTower();
+      case 'math-factors': return this.createRainbowArch();
+      case 'math-geometry': return this.createGeometryTemple();
+      case 'math-gcdlcm': return this.createLFactory();
+      case 'math-solids': return this.createPolyhedronPavilion();
+
+      // --- 英語島 ---
+      case 'eng-phonics': return this.createClockTower();
+      case 'eng-days': return this.createCalendarStation();
+      case 'eng-subjects': return this.createSubjectWorkshop();
+      case 'eng-review': return this.createReviewGazebo();
+
+      // --- 自然島 ---
+      case 'sci-sun-tracker': return this.createSunTracker();
+      case 'sci-plant-energy': return this.createPlantSphere();
+      case 'sci-plant-reproduce': return this.createGreenhouse();
+      case 'sci-dichotomy': return this.createDichotomyPavilion();
+
+      // --- 社會島 ---
+      case 'soc-taiwan-geo': return this.createTaiwanSandTable();
+      case 'soc-terrains': return this.createTerrainSteps();
+      case 'soc-monsoon': return this.createWeatherStation();
+      case 'soc-water': return this.createReservoirDam();
+
+      // --- 國語島 ---
+      case 'chi-dream': return this.createDreamPavilion();
+      case 'chi-art': return this.createArtGallery();
+      case 'chi-strategy': return this.createStrategyPaifang();
+      case 'chi-rhetoric': return this.createInkstonePavilion();
+
+      default: return this.createDefaultBuilding(islandId);
+    }
   }
 
-  buildIslandBuildings(island) {
-    const cells = island.cells;
-    const buildings = island.buildings;
+  buildAllBuildings() {
+    const islands = this.worldManager.curriculum.islands;
+    const geosByMat = new Map();
+    const addGeom = (mat, geo, matrix) => {
+      if (!geosByMat.has(mat)) geosByMat.set(mat, []);
+      geosByMat.get(mat).push(geo.clone().applyMatrix4(matrix));
+    };
 
-    // 分配建築至島嶼的不同單元格中心
-    buildings.forEach((b, idx) => {
-      // 避免第一格若為中心，分散至各 cell
-      const cellIdx = Math.min(idx, cells.length - 1);
-      const [q, r] = cells[cellIdx];
-      const { x, z } = axialToWorld(q, r);
+    islands.forEach(island => {
+      const cells = island.cells;
+      const buildings = island.buildings;
 
-      let buildingMesh;
-      switch (b.id) {
-        // --- 中央島 ---
-        case 'center-stage':
-          buildingMesh = this.createCenterStage();
-          break;
-        case 'center-wardrobe':
-          buildingMesh = this.createWardrobe();
-          break;
+      buildings.forEach((b, idx) => {
+        const cellIdx = Math.min(idx, cells.length - 1);
+        const [q, r] = cells[cellIdx];
+        const { x, z } = axialToWorld(q, r);
 
-        // --- 數學島 ---
-        case 'math-linegraph':
-          buildingMesh = this.createLineGraphTower();
-          break;
-        case 'math-factors':
-          buildingMesh = this.createRainbowArch();
-          break;
-        case 'math-geometry':
-          buildingMesh = this.createGeometryTemple();
-          break;
-        case 'math-gcdlcm':
-          buildingMesh = this.createLFactory();
-          break;
-        case 'math-solids':
-          buildingMesh = this.createPolyhedronPavilion();
-          break;
+        const buildingGroup = this.createBuildingById(b.id, island.id);
+        buildingGroup.position.set(x, HEX_HEIGHT, z);
+        buildingGroup.updateMatrixWorld(true);
 
-        // --- 英語島 ---
-        case 'eng-phonics':
-          buildingMesh = this.createClockTower();
-          break;
-        case 'eng-days':
-          buildingMesh = this.createCalendarStation();
-          break;
-        case 'eng-subjects':
-          buildingMesh = this.createSubjectWorkshop();
-          break;
-        case 'eng-review':
-          buildingMesh = this.createReviewGazebo();
-          break;
+        buildingGroup.traverse(child => {
+          if (child.isMesh && child.geometry && child.material) {
+            addGeom(child.material, child.geometry, child.matrixWorld);
+          }
+        });
 
-        // --- 自然島 ---
-        case 'sci-sun-tracker':
-          buildingMesh = this.createSunTracker();
-          break;
-        case 'sci-plant-energy':
-          buildingMesh = this.createPlantSphere();
-          break;
-        case 'sci-plant-reproduce':
-          buildingMesh = this.createGreenhouse();
-          break;
-        case 'sci-dichotomy':
-          buildingMesh = this.createDichotomyPavilion();
-          break;
+        this.worldManager.registerBuildingHitbox(b, island, x, z);
+      });
+    });
 
-        // --- 社會島 ---
-        case 'soc-taiwan-geo':
-          buildingMesh = this.createTaiwanSandTable();
-          break;
-        case 'soc-terrains':
-          buildingMesh = this.createTerrainSteps();
-          break;
-        case 'soc-monsoon':
-          buildingMesh = this.createWeatherStation();
-          break;
-        case 'soc-water':
-          buildingMesh = this.createReservoirDam();
-          break;
-
-        // --- 國語島 ---
-        case 'chi-dream':
-          buildingMesh = this.createDreamPavilion();
-          break;
-        case 'chi-art':
-          buildingMesh = this.createArtGallery();
-          break;
-        case 'chi-strategy':
-          buildingMesh = this.createStrategyPaifang();
-          break;
-        case 'chi-rhetoric':
-          buildingMesh = this.createInkstonePavilion();
-          break;
-
-        default:
-          buildingMesh = this.createDefaultBuilding(island.id);
-          break;
+    // 依材質合併為全島靜態建築群 (極致降低 Draw Calls 至 ~8 個)
+    geosByMat.forEach((geos, mat) => {
+      if (geos.length > 0) {
+        const mergedGeo = BufferGeometryUtils.mergeGeometries(geos);
+        const mesh = new THREE.Mesh(mergedGeo, mat);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        this.worldManager.buildingsGroup.add(mesh);
       }
-
-      buildingMesh.position.set(x, HEX_HEIGHT, z);
-      this.worldManager.registerBuilding(buildingMesh, b, island);
     });
   }
 
@@ -142,7 +116,7 @@ export class ModelBuilder {
     group.add(runway);
 
     // 走道前端台階
-    const steps = new THREE.Mesh(GeoPool.box, Materials.center);
+    const steps = new THREE.Mesh(GeoPool.box, Materials.centerAccent);
     steps.scale.set(8, 0.8, 2.5);
     steps.position.set(0, 0.4, 17.5);
     group.add(steps);
@@ -353,7 +327,7 @@ export class ModelBuilder {
 
   createCalendarStation() {
     const group = new THREE.Group();
-    const station = new THREE.Mesh(GeoPool.box, Materials.englishAccent);
+    const station = new THREE.Mesh(GeoPool.box, Materials.english);
     station.scale.set(9, 5, 6);
     station.position.y = 2.5;
     group.add(station);
@@ -375,7 +349,7 @@ export class ModelBuilder {
     workshop.position.y = 3;
     group.add(workshop);
 
-    const roof = new THREE.Mesh(GeoPool.cone, Materials.roofOrange);
+    const roof = new THREE.Mesh(GeoPool.cone, Materials.roofRed);
     roof.scale.set(6.5, 4, 6.5);
     roof.position.y = 8;
     roof.rotation.y = Math.PI / 4;
@@ -514,7 +488,7 @@ export class ModelBuilder {
   createTaiwanSandTable() {
     const group = new THREE.Group();
     // 圓形經緯沙盤基座
-    const base = new THREE.Mesh(GeoPool.cylinder, Materials.socialAccent);
+    const base = new THREE.Mesh(GeoPool.cylinder, Materials.social);
     base.scale.set(8, 2, 8);
     base.position.y = 1;
     group.add(base);
@@ -568,13 +542,13 @@ export class ModelBuilder {
   createReservoirDam() {
     const group = new THREE.Group();
     // 水庫大壩弧形牆
-    const damWall = new THREE.Mesh(GeoPool.box, Materials.rock);
+    const damWall = new THREE.Mesh(GeoPool.box, Materials.darkRock);
     damWall.scale.set(10, 7, 4);
     damWall.position.y = 3.5;
     group.add(damWall);
 
     // 蓄水面
-    const reservoir = new THREE.Mesh(GeoPool.box, Materials.sea);
+    const reservoir = new THREE.Mesh(GeoPool.box, Materials.neonCyan);
     reservoir.scale.set(8, 5, 4);
     reservoir.position.set(0, 3, -3);
     group.add(reservoir);
@@ -608,7 +582,7 @@ export class ModelBuilder {
     group.add(gallery);
 
     // 羅馬式三角門楣
-    const pediment = new THREE.Mesh(GeoPool.cone, Materials.chineseAccent);
+    const pediment = new THREE.Mesh(GeoPool.cone, Materials.chinese);
     pediment.scale.set(6, 3, 6);
     pediment.position.y = 7.5;
     pediment.rotation.y = Math.PI / 4;

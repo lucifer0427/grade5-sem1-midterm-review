@@ -18,7 +18,10 @@ class QuietHandler(http.server.SimpleHTTPRequestHandler):
     def log_message(self, format, *args):
         pass
 
-httpd = socketserver.TCPServer(('127.0.0.1', 0), QuietHandler)
+class ThreadedHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
+    daemon_threads = True
+
+httpd = ThreadedHTTPServer(('127.0.0.1', 0), QuietHandler)
 PORT = httpd.server_address[1]
 t = threading.Thread(target=httpd.serve_forever)
 t.daemon = True
@@ -76,9 +79,15 @@ cmd = [
 
 res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 html = res.stdout.decode('utf-8', errors='ignore')
+err = res.stderr.decode('utf-8', errors='ignore')
 
 if os.path.exists(test_html_path):
     os.remove(test_html_path)
+
+if '<div id="debug-error-box"' in html:
+    idx = html.find('<div id="debug-error-box"')
+    end_idx = html.find('</div>', idx)
+    print("⚠️ 瀏覽器頁面報錯:", html[idx:end_idx+6])
 
 if '<div id="e2e-result"' in html:
     idx = html.find('<div id="e2e-result"')

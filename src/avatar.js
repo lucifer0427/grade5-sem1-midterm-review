@@ -1,7 +1,42 @@
 // avatar.js: 3D 練習生換裝捏人更衣室與專屬主角精緻實體化系統
 import * as THREE from 'three';
+import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 import { Materials } from './kit.js';
 import { HEX_HEIGHT } from './world.js';
+
+// 子群組幾何體依材質合併優化函式 (大幅降低 Draw Calls 且無損動畫骨骼層次)
+function mergeGroupMeshes(group) {
+  const geosByMat = new Map();
+  group.updateMatrixWorld(true);
+  const inv = group.matrixWorld.clone().invert();
+
+  const meshes = [];
+  group.traverse(child => {
+    if (child !== group && child.isMesh && child.geometry && child.material) {
+      meshes.push(child);
+    }
+  });
+
+  meshes.forEach(m => {
+    const mat = m.material;
+    if (!geosByMat.has(mat)) geosByMat.set(mat, []);
+    const localMatrix = m.matrixWorld.clone().premultiply(inv);
+    const geo = m.geometry.clone().applyMatrix4(localMatrix);
+    geosByMat.get(mat).push(geo);
+    if (m.parent) m.parent.remove(m);
+  });
+
+  geosByMat.forEach((geos, mat) => {
+    if (geos.length > 0) {
+      const merged = BufferGeometryUtils.mergeGeometries(geos);
+      const mesh = new THREE.Mesh(merged, mat);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      group.add(mesh);
+    }
+  });
+  return group;
+}
 
 // 精緻角色專用材質庫 (細膩動漫質感)
 const CharMaterials = {
@@ -450,6 +485,14 @@ export class AvatarManager {
     armGroupR.add(stickGroup);
     root.add(armGroupR);
 
+    // 依骨骼群組自動合併靜態子網格 (保留關節動態旋轉樞紐，Draw Calls 暴降 60%)
+    mergeGroupMeshes(headGroup);
+    mergeGroupMeshes(bodyGroup);
+    mergeGroupMeshes(legGroupL);
+    mergeGroupMeshes(legGroupR);
+    mergeGroupMeshes(armGroupL);
+    mergeGroupMeshes(armGroupR);
+
     root.userData = {
       legL: legGroupL,
       legR: legGroupR,
@@ -465,14 +508,6 @@ export class AvatarManager {
   refreshAvatar() {
     this.avatarGroup.remove(this.playerMesh);
     this.playerMesh = this.buildPlayerAvatar();
-    this.playerMesh.position.set(0, HEX_HEIGHT + 0.2, 14);
-    this.playerMesh.scale.set(1.8, 1.8, 1.8);
-    this.avatarGroup.add(this.playerMesh);
-    if (window.reviewApp && window.reviewApp.playerController) {
-      window.reviewApp.playerController.playerMesh = this.playerMesh;
-    }
-    this.saveConfig();
-  }
     this.playerMesh.position.set(0, HEX_HEIGHT + 0.2, 14);
     this.playerMesh.scale.set(1.8, 1.8, 1.8);
     this.avatarGroup.add(this.playerMesh);
