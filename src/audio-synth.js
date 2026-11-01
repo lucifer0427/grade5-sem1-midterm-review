@@ -9,11 +9,21 @@ export class AudioSynth {
   // 必須在使用者首次手勢中呼叫以解鎖音訊上下文
   unlock() {
     if (!this.ctx) {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      this.ctx = new AudioContext();
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) {
+          this.ctx = new AudioContext();
+        }
+      } catch (e) {
+        console.warn('[AudioSynth] 建立 AudioContext 失敗:', e);
+        return;
+      }
     }
-    if (this.ctx.state === 'suspended') {
-      this.ctx.resume();
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume().catch((err) => {
+        // 靜默捕獲平板/手機上的 NotAllowedError，待學童首次按鈕點擊後自動就緒
+        console.warn('[AudioSynth] 等待明確點擊手勢解鎖音訊:', err.message);
+      });
     }
     this.unlocked = true;
   }
@@ -227,5 +237,70 @@ export class AudioSynth {
 
     osc.start(now);
     osc.stop(now + 0.3);
+  }
+
+  // 10. Obby 彈跳蹦床 (Super Jump Pad: 雙頻高揚滑音)
+  playBounce() {
+    if (!this.unlocked || !this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(260, now);
+    osc.frequency.exponentialRampToValueAtTime(780, now + 0.18);
+
+    gain.gain.setValueAtTime(0.35, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.22);
+  }
+
+  // 11. Obby Checkpoint 存檔點解鎖音 (雙音亮清脆和弦)
+  playCheckpoint() {
+    if (!this.unlocked || !this.ctx) return;
+    const now = this.ctx.currentTime;
+    [587.33, 880, 1174.66].forEach((f, i) => { // D5, A5, D6
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      const t = now + i * 0.05;
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(f, t);
+
+      gain.gain.setValueAtTime(0.25, t);
+      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(t);
+      osc.stop(t + 0.3);
+    });
+  }
+
+  // 12. 墜落失足與重生 (Respawn)
+  playRespawn() {
+    if (!this.unlocked || !this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(450, now);
+    osc.frequency.exponentialRampToValueAtTime(220, now + 0.15);
+
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.18);
   }
 }

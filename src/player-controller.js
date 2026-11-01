@@ -29,6 +29,7 @@ export class PlayerController {
     this.sprintMoveSpeed = 17.5;
     this.moveSpeed = this.baseMoveSpeed;
     this.isSprinting = false;
+    this.virtualInput = { x: 0, z: 0 }; // 行動端虛擬搖桿輸入向量
     this.currentVelocity = new THREE.Vector3(0, 0, 0); // 物理速度慣性向量
     this.targetMovePoint = null; // 點擊地面移動目標
 
@@ -62,6 +63,10 @@ export class PlayerController {
     // 特殊狀態 (加速 Buff / 跳舞中)
     this.speedBuffTimer = 0;
     this.dancingTimer = 0;
+
+    // Obby 跑酷模式旗標與實例引用
+    this.isObbyMode = false;
+    this.obbyCourse = null;
 
     // 1. 大地星光拾取物 (Collectibles)
     this.collectiblesGroup = new THREE.Group();
@@ -359,6 +364,16 @@ export class PlayerController {
     }
   }
 
+  // 設定行動端虛擬搖桿輸入 (x: -1~1 左右, z: -1~1 前後)
+  setVirtualInput(x, z) {
+    if (!this.virtualInput) this.virtualInput = { x: 0, z: 0 };
+    this.virtualInput.x = x;
+    this.virtualInput.z = z;
+    if ((x !== 0 || z !== 0) && !this.isControlling) {
+      this.togglePlayerControl(true);
+    }
+  }
+
   // 跳躍機制
   jump() {
     if (this.isJumping || !this.playerMesh) return;
@@ -405,6 +420,38 @@ export class PlayerController {
       if (toast) toast.style.display = 'none';
       this.targetMovePoint = null;
       if (this.targetMarker) this.targetMarker.visible = false;
+    }
+  }
+
+  // 設定 Obby 模式啟用狀態
+  setObbyMode(active, obbyCourse = null) {
+    this.isObbyMode = active;
+    this.obbyCourse = obbyCourse;
+    if (active) {
+      this.isControlling = true;
+      if (this.controls) this.controls.enabled = true;
+      if (this.playerMesh) {
+        this.playerMesh.position.set(0, 2.8, 0);
+        this.currentVelocity.set(0, 0, 0);
+        this.jumpVelocity = 0;
+        this.isJumping = false;
+      }
+      // 將相機移至 Obby 起點後方追隨
+      if (this.camera && this.controls) {
+        this.camera.position.set(0, 20, -18);
+        this.controls.target.set(0, 3, 0);
+      }
+    } else {
+      if (this.playerMesh) {
+        this.playerMesh.position.set(0, HEX_HEIGHT + 0.2, 0);
+        this.currentVelocity.set(0, 0, 0);
+        this.jumpVelocity = 0;
+        this.isJumping = false;
+      }
+      if (this.camera && this.controls) {
+        this.camera.position.set(0, HEX_HEIGHT + 30, HEX_HEIGHT + 36);
+        this.controls.target.set(0, HEX_HEIGHT + 1.8, 0);
+      }
     }
   }
 
@@ -522,19 +569,27 @@ export class PlayerController {
       this.targetMarker.scale.set(pulse, pulse, pulse);
     }
 
-    // 3. 移動邏輯 (WASD / 點擊尋路) — 物理慣性加減速 (零 GC)
+    // 3. 移動邏輯 (WASD / 虛擬搖桿 / 點擊尋路) — 物理慣性加減速 (零 GC)
     const moveDir = this._vMoveDir.set(0, 0, 0);
     if (this.keys.forward) moveDir.z -= 1;
     if (this.keys.backward) moveDir.z += 1;
     if (this.keys.left) moveDir.x -= 1;
     if (this.keys.right) moveDir.x += 1;
 
+    // 整合平板虛擬搖桿輸入
+    if (this.virtualInput && (this.virtualInput.x !== 0 || this.virtualInput.z !== 0)) {
+      moveDir.x += this.virtualInput.x;
+      moveDir.z += this.virtualInput.z;
+    }
+
     const desiredVelocity = this._vDesiredVel.set(0, 0, 0);
 
     if (moveDir.lengthSq() > 0) {
       this.targetMovePoint = null;
       if (this.targetMarker) this.targetMarker.visible = false;
-      moveDir.normalize();
+      if (moveDir.lengthSq() > 1.0) {
+        moveDir.normalize();
+      }
 
       // 依相機水平朝向計算前進方向 (按 W 永遠是朝畫面正前方前進)
       const camForward = this._vCamForward;
@@ -570,13 +625,17 @@ export class PlayerController {
       : (1 - Math.exp(-12 * delta));
     this.currentVelocity.lerp(desiredVelocity, accelFactor);
 
-    // 邊界約束與滑牆物理 (P0-3: 遇島嶼邊界順暢滑動，杜絕掉海)
+    // 邊界約束與滑牆物理
     const stepX = this.currentVelocity.x * delta;
     const stepZ = this.currentVelocity.z * delta;
     const currentX = this.playerMesh.position.x;
     const currentZ = this.playerMesh.position.z;
 
-    if (this.walkableCells && this.walkableCells.length > 0) {
+    if (this.isObbyMode) {
+      // Obby 模式：直接依速度更新座標 (無邊界拘束，允許在浮空跳台間跑酷與踩空掉落)
+      this.playerMesh.position.x += stepX;
+      this.playerMesh.position.z += stepZ;
+    } else if (this.walkableCells && this.walkableCells.length > 0) {
       const nextX = currentX + stepX;
       const nextZ = currentZ + stepZ;
       if (this.isWalkable(nextX, nextZ)) {
@@ -595,12 +654,14 @@ export class PlayerController {
       this.playerMesh.position.addScaledVector(this.currentVelocity, delta);
     }
 
-    // 墜海防護重置 (P0-3 意外掉出安全區時自動安全復位中央舞台)
-    if (this.playerMesh.position.y < HEX_HEIGHT - 3 || (!this.isWalkable(this.playerMesh.position.x, this.playerMesh.position.z) && Math.hypot(this.playerMesh.position.x, this.playerMesh.position.z) > 160)) {
-      this.playerMesh.position.set(0, HEX_HEIGHT + 0.2, 0);
-      this.currentVelocity.set(0, 0, 0);
-      this.targetMovePoint = null;
-      if (this.targetMarker) this.targetMarker.visible = false;
+    // 墜海防護重置 (島嶼模式專用)
+    if (!this.isObbyMode) {
+      if (this.playerMesh.position.y < HEX_HEIGHT - 3 || (!this.isWalkable(this.playerMesh.position.x, this.playerMesh.position.z) && Math.hypot(this.playerMesh.position.x, this.playerMesh.position.z) > 160)) {
+        this.playerMesh.position.set(0, HEX_HEIGHT + 0.2, 0);
+        this.currentVelocity.set(0, 0, 0);
+        this.targetMovePoint = null;
+        if (this.targetMarker) this.targetMarker.visible = false;
+      }
     }
 
     const groundSpeed = Math.hypot(this.currentVelocity.x, this.currentVelocity.z);
@@ -646,28 +707,63 @@ export class PlayerController {
     }
 
     // 6. 垂直跳躍物理與踏地步態起伏
-    const groundY = HEX_HEIGHT + 0.2;
-    if (this.isJumping) {
-      this.jumpVelocity += this.gravity * delta;
-      this.playerMesh.position.y += this.jumpVelocity * delta;
+    if (this.isObbyMode) {
+      // Obby 模式動態跳台高度與下墜物理
+      const pY = this.playerMesh.position.y;
+      const groundY = this.obbyCourse ? this.obbyCourse.getGroundHeightAt(this.playerMesh.position.x, this.playerMesh.position.z, pY) : -999;
 
-      if (this.playerMesh.position.y <= groundY) {
-        this.playerMesh.position.y = groundY;
-        this.isJumping = false;
-        this.jumpVelocity = 0;
+      if (this.isJumping || pY > groundY + 0.05) {
+        this.jumpVelocity += this.gravity * delta;
+        this.playerMesh.position.y += this.jumpVelocity * delta;
+
+        // 若下墜過程中穿越了腳下的跳台表面
+        if (this.jumpVelocity <= 0 && this.playerMesh.position.y <= groundY && groundY > -900) {
+          this.playerMesh.position.y = groundY;
+          this.isJumping = false;
+          this.jumpVelocity = 0;
+        }
+      } else {
+        if (groundY > -900) {
+          this.playerMesh.position.y = groundY;
+          this.jumpVelocity = 0;
+          this.isJumping = false;
+        } else {
+          // 腳底踏空！直接觸發下墜
+          this.isJumping = true;
+          this.jumpVelocity = 0;
+        }
+      }
+
+      // 呼叫 Obby 障礙物碰撞與墜海重生
+      if (this.obbyCourse) {
+        this.obbyCourse.update(delta, time, this);
       }
     } else {
-      if (isMoving) {
-        // 輕巧小跑步微幅起伏 (腳底始終親吻地面，無懸空浮空)
-        const strideBounce = Math.abs(Math.sin(this.walkCycle)) * 0.06;
-        this.playerMesh.position.y = groundY + strideBounce;
-      } else if (this.dancingTimer <= 0) {
-        this.playerMesh.position.y = groundY;
+      // 普通島嶼模式
+      const groundY = HEX_HEIGHT + 0.2;
+      if (this.isJumping) {
+        this.jumpVelocity += this.gravity * delta;
+        this.playerMesh.position.y += this.jumpVelocity * delta;
+
+        if (this.playerMesh.position.y <= groundY) {
+          this.playerMesh.position.y = groundY;
+          this.isJumping = false;
+          this.jumpVelocity = 0;
+        }
+      } else {
+        if (isMoving) {
+          const strideBounce = Math.abs(Math.sin(this.walkCycle)) * 0.06;
+          this.playerMesh.position.y = groundY + strideBounce;
+        } else if (this.dancingTimer <= 0) {
+          this.playerMesh.position.y = groundY;
+        }
       }
     }
 
-    // 7. 靠近建築物偵測
-    this.checkNearbyBuildings();
+    // 7. 靠近建築物偵測 (島嶼模式專用)
+    if (!this.isObbyMode) {
+      this.checkNearbyBuildings();
+    }
 
     // 8. 第三人稱相機平滑無縫追隨 (與 OrbitControls 完美相容，零 GC)
     if (this.isControlling) {

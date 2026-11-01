@@ -20,6 +20,7 @@ const files = [
   'src/avatar.js',
   'src/player-controller.js',
   'src/certificate.js',
+  'src/obby-course.js',
   'src/app.js'
 ];
 

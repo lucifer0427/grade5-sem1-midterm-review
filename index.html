@@ -76,6 +76,9 @@
     <button id="btn-toggle-ctrl" class="control-circle-btn" title="自由操控練習生跑島 (WASD/點擊)">
       🎮
     </button>
+    <button id="btn-toggle-obby" class="control-circle-btn" title="進入 Roblox 跑酷闖關 (Obby)" style="background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; font-size: 20px;">
+      🏃
+    </button>
     <button id="btn-top-view" class="control-circle-btn" title="切換鳥瞰俯視視角">
       🗺️
     </button>
@@ -233,7 +236,46 @@
     </div>
   </div>
 
+  <!-- Obby 跑酷闖關專屬 HUD -->
+  <div id="obby-hud" class="hidden">
+    <div class="obby-top-bar">
+      <div class="hud-pill obby-pill">
+        <span style="color:#f59e0b;font-weight:900;">🏃 OBBY 跑酷</span>
+        <span id="obby-stage-text" style="color:#0f172a;font-weight:700;">Stage 1 / 5</span>
+      </div>
+      <div class="hud-pill obby-pill">
+        <span>⏱️</span>
+        <span id="obby-timer-text" style="font-family:monospace;font-size:16px;font-weight:800;">00:00.0</span>
+      </div>
+      <div class="hud-pill obby-pill">
+        <span>🚩 存檔點：</span>
+        <span id="obby-checkpoint-text" style="font-weight:700;color:#10b981;">起點</span>
+      </div>
+      <div class="hud-pill obby-pill">
+        <span>💦 重生：</span>
+        <span id="obby-fall-count" style="font-weight:700;color:#ef4444;">0</span>
+      </div>
+      <button id="btn-exit-obby" class="filter-btn" style="background:#ef4444;color:#fff;min-height:36px;padding:4px 12px;font-size:13px;">
+        🚪 返回島嶼
+      </button>
+    </div>
+    <!-- 知識門題目指示條 -->
+    <div id="obby-trivia-banner" style="display:none;margin-top:8px;background:rgba(15,23,42,0.85);backdrop-filter:blur(8px);color:#fff;padding:8px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.2);max-width:600px;text-align:center;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,0.3);">
+      <div id="obby-trivia-text"></div>
+    </div>
+  </div>
+
+  <!-- 平板/手機行動端虛擬觸控控制器 (Virtual D-Pad & Jump) -->
+  <div id="touch-controls">
+    <div id="virtual-joystick-base">
+      <div id="virtual-joystick-knob"></div>
+    </div>
+    <button id="btn-touch-jump" class="touch-jump-btn" title="跳躍 (Space)">
+      ⬆️<br><span>JUMP</span>
+    </button>
+  </div>
+
   <!-- 主入口程式碼 (Cache-Busting 保證載入最新版本) -->
-  <script type="module" src="src/app.js?v=20261031_03"></script>
+  <script type="module" src="src/app.js?v=20261101_01"></script>
 </body>
 </html>

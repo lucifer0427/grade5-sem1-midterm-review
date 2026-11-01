@@ -422,3 +422,112 @@ body, html {
   80% { opacity: 1; transform: translate(-50%, -60px) scale(1.0); }
   100% { opacity: 0; transform: translate(-50%, -90px) scale(0.9); }
 }
+
+/* =========================================
+   平板與行動端專用虛擬搖桿與跳躍鍵 (Virtual Touch D-Pad)
+   ========================================= */
+#touch-controls {
+  position: absolute;
+  bottom: 24px;
+  left: 0;
+  right: 0;
+  height: 140px;
+  pointer-events: none;
+  z-index: 20;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 0 28px;
+}
+
+#virtual-joystick-base {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.5);
+  border: 2.5px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), inset 0 0 12px rgba(255, 255, 255, 0.1);
+  position: relative;
+  pointer-events: auto;
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+#virtual-joystick-knob {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #60a5fa, #2563eb);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  position: absolute;
+  top: 34px;
+  left: 34px;
+  pointer-events: none;
+  transition: transform 0.05s ease-out;
+}
+
+.touch-jump-btn {
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 900;
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.5);
+  pointer-events: auto;
+  touch-action: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.1;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.touch-jump-btn:active {
+  transform: scale(0.92);
+  box-shadow: 0 3px 10px rgba(239, 68, 68, 0.6);
+}
+
+/* =========================================
+   Obby 跑酷闖關模式專屬 HUD
+   ========================================= */
+#obby-hud {
+  position: absolute;
+  top: 16px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 25;
+}
+
+.obby-top-bar {
+  display: flex;
+  gap: 12px;
+  pointer-events: auto;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.88);
+  padding: 8px 20px;
+  border-radius: 40px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  border: 1.5px solid rgba(245, 158, 11, 0.6);
+}
+
+.obby-pill {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 6px 14px;
+  font-size: 15px;
+  color: #0f172a;
+}
+

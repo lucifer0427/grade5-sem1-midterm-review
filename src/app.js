@@ -13,6 +13,7 @@ import { PeopleManager } from './people.js?v=20261031_03';
 import { AvatarManager } from './avatar.js?v=20261031_03';
 import { PlayerController } from './player-controller.js?v=20261031_03';
 import { CertificateGenerator } from './certificate.js?v=20261031_03';
+import { ObbyCourse } from './obby-course.js?v=20261101_01';
 
 export class App {
   constructor() {
@@ -114,7 +115,11 @@ export class App {
         this.world
       );
 
-      console.log('[INIT] 7. 全部初始化完成，呼叫 hideLoading...');
+      // 建立 3D Roblox 闖關跑酷系統 (Trivia Obby)
+      console.log('[INIT] 7. 建立 ObbyCourse...');
+      this.obbyCourse = new ObbyCourse(this.scene, this.audioSynth, this.quizEngine);
+
+      console.log('[INIT] 8. 全部初始化完成，呼叫 hideLoading...');
       this.updatePlayerHUD(this.quizEngine.playerState);
       this.hideLoading();
 
@@ -147,26 +152,35 @@ export class App {
       this.renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
-    // 首次點擊解鎖音效與 Raycast 拾取
+    // 首次點擊解鎖音效與 Raycast 拾取 (平板觸控防抖與非同步保護)
     this.renderer.domElement.addEventListener('pointerdown', (e) => {
+      if (!e) return;
       this.audioSynth.unlock();
-      this.pointerDownPos = { x: e.clientX, y: e.clientY };
+      this.pointerDownPos = { x: e.clientX || 0, y: e.clientY || 0 };
     });
 
     this.renderer.domElement.addEventListener('pointerup', (e) => {
-      if (!this.pointerDownPos) return;
-      const dx = Math.abs(e.clientX - this.pointerDownPos.x);
-      const dy = Math.abs(e.clientY - this.pointerDownPos.y);
-      // 容許 15px 內的正常點擊與平板觸控，避免誤判為拖曳旋轉
-      if (dx < 16 && dy < 16) {
+      if (!this.pointerDownPos || !e) return;
+      const curX = e.clientX || 0;
+      const curY = e.clientY || 0;
+      const dx = Math.abs(curX - this.pointerDownPos.x);
+      const dy = Math.abs(curY - this.pointerDownPos.y);
+      this.pointerDownPos = null;
+      // 容許 18px 內的正常點擊與平板觸控，避免誤判為拖曳旋轉
+      if (dx < 18 && dy < 18) {
         this.handlePointerClick(e);
       }
     });
 
-    // 滑鼠懸浮指標切換 (Hover Feedback)
+    this.renderer.domElement.addEventListener('pointercancel', () => {
+      this.pointerDownPos = null;
+    });
+
+    // 滑鼠懸浮指標切換 (觸控設備跳過 Raycast 懸浮以節省效能與防報錯)
     this.renderer.domElement.addEventListener('pointermove', (e) => {
-      if (!this.world) return;
+      if (!this.world || !e || e.pointerType === 'touch') return;
       const rect = this.renderer.domElement.getBoundingClientRect();
+      if (!rect || rect.width <= 0 || rect.height <= 0) return;
       Pool.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       Pool.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
       Pool.raycaster.setFromCamera(Pool.mouse, this.camera);
@@ -211,6 +225,15 @@ export class App {
         if (this.playerController) {
           this.playerController.togglePlayerControl();
         }
+      });
+    }
+
+    // 3D Roblox 闖關跑酷模式切換按鈕
+    const obbyToggleBtn = document.getElementById('btn-toggle-obby');
+    if (obbyToggleBtn) {
+      obbyToggleBtn.addEventListener('click', () => {
+        this.audioSynth.playClick();
+        this.toggleObbyMode();
       });
     }
 
@@ -276,14 +299,89 @@ export class App {
         this.focusIsland(targetIsland);
       });
     });
+
+    // 初始化行動端/平板專用虛擬觸控控制器
+    this.initTouchControls();
+  }
+
+  // 行動端/平板虛擬搖桿與跳躍鍵事件綁定
+  initTouchControls() {
+    const joystickBase = document.getElementById('virtual-joystick-base');
+    const joystickKnob = document.getElementById('virtual-joystick-knob');
+    const jumpBtn = document.getElementById('btn-touch-jump');
+    if (!joystickBase || !joystickKnob) return;
+
+    let touchId = null;
+    let baseRect = null;
+    const maxRadius = 38;
+
+    const updateKnob = (clientX, clientY) => {
+      if (!baseRect) baseRect = joystickBase.getBoundingClientRect();
+      const centerX = baseRect.left + baseRect.width / 2;
+      const centerY = baseRect.top + baseRect.height / 2;
+      let dx = clientX - centerX;
+      let dy = clientY - centerY;
+      const dist = Math.hypot(dx, dy);
+      if (dist > maxRadius) {
+        dx = (dx / dist) * maxRadius;
+        dy = (dy / dist) * maxRadius;
+      }
+      joystickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+      if (this.playerController) {
+        // x: 左右 (-1 ~ 1), z: 前後 (dy > 0 為後退, dy < 0 為前進)
+        this.playerController.setVirtualInput(dx / maxRadius, dy / maxRadius);
+      }
+    };
+
+    joystickBase.addEventListener('pointerdown', (e) => {
+      this.audioSynth.unlock();
+      touchId = e.pointerId;
+      baseRect = joystickBase.getBoundingClientRect();
+      joystickBase.setPointerCapture(touchId);
+      updateKnob(e.clientX, e.clientY);
+    });
+
+    joystickBase.addEventListener('pointermove', (e) => {
+      if (touchId === null || e.pointerId !== touchId) return;
+      updateKnob(e.clientX, e.clientY);
+    });
+
+    const resetJoystick = (e) => {
+      if (e && e.pointerId === touchId) {
+        touchId = null;
+        baseRect = null;
+        joystickKnob.style.transform = 'translate(0px, 0px)';
+        if (this.playerController) {
+          this.playerController.setVirtualInput(0, 0);
+        }
+      }
+    };
+
+    joystickBase.addEventListener('pointerup', resetJoystick);
+    joystickBase.addEventListener('pointercancel', resetJoystick);
+
+    // 跳躍按鈕 (支援觸控點擊與手勢解鎖)
+    if (jumpBtn) {
+      jumpBtn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        this.audioSynth.unlock();
+        if (this.playerController) {
+          this.playerController.jump();
+        }
+      });
+    }
   }
 
   handlePointerClick(e) {
-    if (!this.world) return;
+    if (!this.world || !e) return;
 
     const rect = this.renderer.domElement.getBoundingClientRect();
-    Pool.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-    Pool.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    if (!rect || rect.width <= 0 || rect.height <= 0) return;
+
+    const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+    const clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+    Pool.mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+    Pool.mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
 
     Pool.raycaster.setFromCamera(Pool.mouse, this.camera);
     const intersects = Pool.raycaster.intersectObjects(this.world.interactiveObjects, true);
@@ -314,6 +412,65 @@ export class App {
             this.playerController.setMoveTarget(hitPoint);
           }
         }
+      }
+    }
+  }
+
+  // 切換 3D Roblox 闖關跑酷模式
+  toggleObbyMode() {
+    if (!this.obbyCourse || !this.playerController) return;
+
+    const isNowActive = !this.obbyCourse.isActive;
+    const obbyBtn = document.getElementById('btn-toggle-obby');
+    const touchControls = document.getElementById('touch-controls');
+
+    if (isNowActive) {
+      // 1. 隱藏主島場景網格，顯著降低 WebGL 負荷與 Draw Calls
+      if (this.world) {
+        if (this.world.islandGroup) this.world.islandGroup.visible = false;
+        if (this.world.buildingsGroup) this.world.buildingsGroup.visible = false;
+      }
+      if (this.decor && this.decor.decorGroup) this.decor.decorGroup.visible = false;
+      if (this.people && this.people.peopleGroup) this.people.peopleGroup.visible = false;
+
+      // 2. 啟動 Obby 跑酷關卡
+      this.obbyCourse.start();
+      this.playerController.setObbyMode(true, this.obbyCourse);
+
+      // 3. UI 狀態更新
+      if (obbyBtn) {
+        obbyBtn.textContent = '🏝️ 返回島嶼';
+        obbyBtn.classList.add('active');
+      }
+      if (touchControls) touchControls.style.display = 'block';
+
+      // 提示訊息
+      const toast = document.getElementById('ctrl-guide-toast');
+      if (toast) {
+        toast.innerHTML = '🏃 <strong>Roblox 跑酷模式已啟動！</strong><br>踩上跳台與彈跳床，看準時機衝向終點大獎台！';
+        toast.style.display = 'block';
+        setTimeout(() => { if (toast) toast.style.display = 'none'; }, 4000);
+      }
+    } else {
+      // 切換回島嶼模式
+      if (this.world) {
+        if (this.world.islandGroup) this.world.islandGroup.visible = true;
+        if (this.world.buildingsGroup) this.world.buildingsGroup.visible = true;
+      }
+      if (this.decor && this.decor.decorGroup) this.decor.decorGroup.visible = true;
+      if (this.people && this.people.peopleGroup) this.people.peopleGroup.visible = true;
+
+      this.obbyCourse.stop();
+      this.playerController.setObbyMode(false, null);
+
+      if (obbyBtn) {
+        obbyBtn.textContent = '🏃 Roblox跑酷';
+        obbyBtn.classList.remove('active');
+      }
+
+      const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+      if (!isTouch && touchControls && !this.playerController.isControlling) {
+        touchControls.style.display = 'none';
       }
     }
   }
@@ -661,11 +818,14 @@ export class App {
     this.environment.update(elapsedTime, delta);
     this.resolutionCtrl.update(delta);
 
-    // Heart Island 沙盒生態每幀更新
-    if (this.world) this.world.update(delta, elapsedTime);
-    const isNight = this.currentHour >= 19 || this.currentHour < 6;
-    if (this.decor) this.decor.update(elapsedTime, isNight);
-    if (this.people) this.people.update(delta, elapsedTime);
+    // Heart Island 沙盒生態每幀更新 (Obby 模式時暫停主島更新以節約效能)
+    const isObby = this.obbyCourse && this.obbyCourse.isActive;
+    if (!isObby) {
+      if (this.world) this.world.update(delta, elapsedTime);
+      const isNight = this.currentHour >= 19 || this.currentHour < 6;
+      if (this.decor) this.decor.update(elapsedTime, isNight);
+      if (this.people) this.people.update(delta, elapsedTime);
+    }
     if (this.avatar) this.avatar.update(elapsedTime);
 
     this.renderer.render(this.scene, this.camera);
